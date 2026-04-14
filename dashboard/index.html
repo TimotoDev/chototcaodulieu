@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chotot Xe Máy Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              900: '#0a0f1e',
+              800: '#0d1426',
+              700: '#111b33',
+              600: '#1a2744',
+              500: '#1e3057',
+            },
+            accent: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0a0f1e; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .card { background: #111b33; border: 1px solid #1a2744; border-radius: 12px; }
+    .card-inner { background: #0d1426; border: 1px solid #1a2744; border-radius: 8px; }
+    .spinner { border: 3px solid #1a2744; border-top: 3px solid #38bdf8; border-radius: 50%; width: 36px; height: 36px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .listing-card { background: #111b33; border: 1px solid #1a2744; border-radius: 10px; transition: all 0.2s; }
+    .listing-card:hover { border-color: #38bdf8; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(56,189,248,0.15); }
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-brand { background: #0c2a4a; color: #38bdf8; }
+    .badge-type { background: #1a3a1a; color: #4ade80; }
+    select, input { background: #0d1426; border: 1px solid #1a2744; color: #e2e8f0; border-radius: 8px; }
+    select:focus, input:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,0.15); }
+    .btn-primary { background: #0ea5e9; color: white; border-radius: 8px; padding: 8px 18px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary:hover { background: #0284c7; }
+    .btn-ghost { background: #1a2744; color: #94a3b8; border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background 0.2s; }
+    .btn-ghost:hover { background: #1e3057; color: #e2e8f0; }
+    .stat-card { background: linear-gradient(135deg, #111b33 0%, #0d1426 100%); border: 1px solid #1a2744; border-radius: 12px; padding: 20px; }
+    .thumbnail-img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px 8px 0 0; background: #1a2744; }
+    .no-img { width: 100%; height: 160px; background: linear-gradient(135deg, #1a2744, #0d1426); border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #0d1426; } ::-webkit-scrollbar-thumb { background: #1a2744; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- Header -->
+<header class="sticky top-0 z-50" style="background: #0d1426; border-bottom: 1px solid #1a2744;">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #0ea5e9, #6366f1);">
+        <i class="fas fa-motorcycle text-white text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-white">Chotot Xe Máy Dashboard</h1>
+        <p class="text-xs" style="color: #64748b;">Phân tích dữ liệu xe máy thời gian thực</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div id="total-badge" class="px-4 py-2 rounded-full text-sm font-bold" style="background: linear-gradient(135deg, #0c2a4a, #0a1628); border: 1px solid #0ea5e9; color: #38bdf8;">
+        <i class="fas fa-database mr-2"></i><span id="total-count">Đang tải...</span>
+      </div>
+      <button onclick="refreshAll()" class="btn-ghost text-sm">
+        <i class="fas fa-sync-alt mr-1"></i> Làm mới
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+  <!-- Section 1: Daily Line Chart -->
+  <section class="card p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-lg font-semibold text-white"><i class="fas fa-chart-line mr-2 text-blue-400"></i>Tin đăng theo ngày</h2>
+        <p class="text-sm mt-1" style="color: #64748b;">30 ngày gần nhất</p>
+      </div>
+      <div id="chart-loading" class="spinner"></div>
+    </div>
+    <div style="height: 260px;">
+      <canvas id="dailyChart"></canvas>
+    </div>
+  </section>
+
+  <!-- Section 2: Stats Cards -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Total -->
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium" style="color: #64748b;">Tổng xe niêm yết</span>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background: #0c2a4a;">
+          <i class="fas fa-motorcycle text-blue-400"></i>
+        </div>
+      </div>
+      <div class="text-3xl font-bold text-white" id="stat-total">—</div>
+      <p class="text-xs mt-1" style="color: #64748b;">trong cơ sở dữ liệu</p>
+    </div>
+
+    <!-- Brand chart -->
+    <div class="stat-card md:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium" style="color: #64748b;">Phân bổ theo thương hiệu</span>
+        <i class="fas fa-tag text-blue-400"></i>
+      </div>
+      <div style="height: 140px;">
+        <canvas id="brandChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Types pie -->
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium" style="color: #64748b;">Loại xe</span>
+        <i class="fas fa-chart-pie text-green-400"></i>
+      </div>
+      <div style="height: 180px;">
+        <canvas id="typeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Top regions -->
+    <div class="stat-card md:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium" style="color: #64748b;">Top tỉnh/thành</span>
+        <i class="fas fa-map-marker-alt text-red-400"></i>
+      </div>
+      <div id="region-bars" class="space-y-2 overflow-y-auto" style="max-height: 180px;"></div>
+    </div>
+  </section>
+
+  <!-- Section 3: Filter Bar -->
+  <section class="card p-5">
+    <h2 class="text-base font-semibold text-white mb-4"><i class="fas fa-filter mr-2 text-blue-400"></i>Bộ lọc tìm kiếm</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div>
+        <label class="block text-xs mb-1" style="color: #64748b;">Ngày đăng</label>
+        <input type="date" id="filter-date" class="w-full px-3 py-2 text-sm" onchange="applyFilters()" />
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #64748b;">Thương hiệu</label>
+        <select id="filter-brand" class="w-full px-3 py-2 text-sm" onchange="applyFilters()">
+          <option value="">Tất cả</option>
+          <option>Honda</option><option>Yamaha</option><option>Vespa/Piaggio</option>
+          <option>SYM</option><option>Suzuki</option><option>Kawasaki</option>
+          <option>Ducati</option><option>BMW</option><option>Harley-Davidson</option>
+          <option>KTM</option><option>Triumph</option><option>Royal Enfield</option>
+          <option>Benelli</option><option>Kymco</option><option>Peugeot</option><option>Khác</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #64748b;">Loại xe</label>
+        <select id="filter-type" class="w-full px-3 py-2 text-sm" onchange="applyFilters()">
+          <option value="">Tất cả</option>
+          <option>Tay ga</option><option>Xe số</option><option>Xe côn tay</option>
+          <option>Xe phân khối lớn</option><option>Xe điện</option><option>Xe 3 bánh</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #64748b;">Giá tối thiểu (VNĐ)</label>
+        <input type="number" id="filter-min-price" class="w-full px-3 py-2 text-sm" placeholder="0" step="1000000" onchange="applyFilters()" />
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #64748b;">Giá tối đa (VNĐ)</label>
+        <input type="number" id="filter-max-price" class="w-full px-3 py-2 text-sm" placeholder="Không giới hạn" step="1000000" onchange="applyFilters()" />
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #64748b;">Tỉnh/Thành</label>
+        <input type="text" id="filter-region" class="w-full px-3 py-2 text-sm" placeholder="VD: Hà Nội" oninput="debounceFilters()" />
+      </div>
+    </div>
+    <div class="flex items-center justify-between mt-3">
+      <p class="text-xs" style="color: #64748b;">Kết quả: <span id="result-count" class="text-white font-medium">—</span> xe</p>
+      <button onclick="clearFilters()" class="btn-ghost text-xs">
+        <i class="fas fa-times mr-1"></i>Xóa bộ lọc
+      </button>
+    </div>
+  </section>
+
+  <!-- Section 4: Listing Grid -->
+  <section>
+    <div id="listings-loading" class="flex justify-center py-16">
+      <div class="text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <p style="color: #64748b;">Đang tải dữ liệu xe...</p>
+      </div>
+    </div>
+    <div id="listings-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 hidden"></div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="flex items-center justify-center gap-2 mt-8 hidden">
+      <button id="prev-btn" onclick="changePage(-1)" class="btn-ghost">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <span id="page-info" class="text-sm px-4 py-2 rounded-lg" style="background: #111b33; color: #94a3b8;"></span>
+      <button id="next-btn" onclick="changePage(1)" class="btn-primary">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="mt-16 py-6 text-center text-xs" style="color: #475569; border-top: 1px solid #1a2744;">
+  Chotot Xe Máy Dashboard · Dữ liệu từ Chợ Tốt · Cập nhật hàng ngày
+</footer>
+
+<script>
+  const API_BASE = "https://y6cthyc6gh.execute-api.ap-southeast-1.amazonaws.com";
+
+  let currentPage = 1;
+  let totalItems = 0;
+  let statsTotal = 0; // total from /api/stats, used for page count in no-date mode
+  let currentLimit = 50;
+  let debounceTimer;
+  let dailyChartInstance, brandChartInstance, typeChartInstance;
+  // cursor-based pagination (no-date mode)
+  let cursorStack = [null]; // stack[0]=null means first page
+  let currentCursorIdx = 0;
+  let nextCursorFromApi = null;
+
+  // ── Utility ─────────────────────────────────────────────────────────
+  function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+  function fmtPrice(p) {
+    if (!p) return 'Thỏa thuận';
+    if (p >= 1e9) return (p/1e9).toFixed(2) + ' tỷ';
+    if (p >= 1e6) return (p/1e6).toFixed(1) + ' triệu';
+    return fmt(p) + ' đ';
+  }
+
+  // ── Charts setup ────────────────────────────────────────────────────
+  Chart.defaults.color = '#94a3b8';
+  Chart.defaults.borderColor = '#1a2744';
+
+  function initDailyChart(labels, data) {
+    document.getElementById('chart-loading').style.display = 'none';
+    if (dailyChartInstance) dailyChartInstance.destroy();
+    const ctx = document.getElementById('dailyChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+    gradient.addColorStop(0, 'rgba(14,165,233,0.35)');
+    gradient.addColorStop(1, 'rgba(14,165,233,0)');
+    dailyChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Tin đăng mới',
+          data,
+          borderColor: '#0ea5e9',
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#0ea5e9',
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.raw)} tin` } } },
+        scales: {
+          x: { grid: { color: '#1a2744' }, ticks: { maxTicksLimit: 15, font: { size: 11 } } },
+          y: { grid: { color: '#1a2744' }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  function initBrandChart(brands) {
+    if (brandChartInstance) brandChartInstance.destroy();
+    const top = brands.slice(0, 8);
+    const ctx = document.getElementById('brandChart').getContext('2d');
+    brandChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: top.map(b => b.name),
+        datasets: [{
+          data: top.map(b => b.count),
+          backgroundColor: ['#0ea5e9','#6366f1','#8b5cf6','#a855f7','#ec4899','#f97316','#eab308','#22c55e'],
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.raw)} xe` } } },
+        scales: {
+          x: { grid: { color: '#1a2744' }, ticks: { font: { size: 10 } } },
+          y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  function initTypeChart(types) {
+    if (typeChartInstance) typeChartInstance.destroy();
+    const ctx = document.getElementById('typeChart').getContext('2d');
+    typeChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: types.map(t => t.name),
+        datasets: [{
+          data: types.map(t => t.count),
+          backgroundColor: ['#0ea5e9','#6366f1','#8b5cf6','#ec4899','#f97316','#22c55e'],
+          borderWidth: 0,
+          hoverOffset: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 10 }, padding: 8, boxWidth: 10 } },
+          tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.raw)} xe` } }
+        },
+        cutout: '65%'
+      }
+    });
+  }
+
+  function renderRegionBars(regions) {
+    const maxCount = regions[0]?.count || 1;
+    const html = regions.slice(0,12).map(r => `
+      <div class="flex items-center gap-2 text-xs">
+        <span class="w-32 truncate flex-shrink-0" style="color: #94a3b8;" title="${r.name}">${r.name}</span>
+        <div class="flex-1 rounded-full overflow-hidden" style="height:6px; background:#1a2744;">
+          <div style="width:${Math.round(r.count/maxCount*100)}%; height:100%; background: linear-gradient(90deg, #0ea5e9, #6366f1); border-radius: 3px;"></div>
+        </div>
+        <span class="w-12 text-right font-medium text-white">${fmt(r.count)}</span>
+      </div>`).join('');
+    document.getElementById('region-bars').innerHTML = html;
+  }
+
+  // ── Load Stats ────────────────────────────────────────────────────
+  async function loadStats() {
+    try {
+      const r = await fetch(`${'https://y6cthyc6gh.execute-api.ap-southeast-1.amazonaws.com'}/api/stats`);
+      const data = await r.json();
+      statsTotal = data.total;
+      document.getElementById('stat-total').textContent = fmt(data.total);
+      document.getElementById('total-count').textContent = fmt(data.total) + ' xe';
+      initBrandChart(data.brands);
+      initTypeChart(data.types);
+      renderRegionBars(data.regions);
+
+      // Daily chart uses last 30 days from daily data
+      const daily30 = data.daily.slice(-30);
+      initDailyChart(daily30.map(d => d.date), daily30.map(d => d.count));
+    } catch (e) {
+      console.error('Stats error:', e);
+      document.getElementById('chart-loading').style.display = 'none';
+    }
+  }
+
+  // ── Listing Card ─────────────────────────────────────────────────
+  function renderCard(item) {
+    const thumb = item.thumbnail
+      ? `<img src="${item.thumbnail}" class="thumbnail-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\\'no-img\\'><i class=\\'fas fa-image text-3xl\\' style=\\'color:#1a2744;\\'></i></div>'" />`
+      : `<div class="no-img"><i class="fas fa-motorcycle text-3xl" style="color:#1a2744;"></i></div>`;
+
+    const km = item.mileage ? `${fmt(item.mileage)} km` : '';
+    const year = item.year ? `${item.year}` : '';
+    const meta = [km, year].filter(Boolean).join(' · ');
+
+    return `
+      <div class="listing-card overflow-hidden">
+        <a href="${item.url}" target="_blank" rel="noopener">
+          ${thumb}
+        </a>
+        <div class="p-3">
+          <a href="${item.url}" target="_blank" rel="noopener" class="block text-sm font-semibold text-white hover:text-blue-400 transition-colors leading-snug mb-2 line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            ${item.subject || 'Xe máy'}
+          </a>
+          <div class="text-lg font-bold mb-2" style="color: #38bdf8;">
+            ${fmtPrice(item.price)}
+          </div>
+          <div class="flex flex-wrap gap-1 mb-2">
+            ${item.brand ? `<span class="badge badge-brand">${item.brand}</span>` : ''}
+            ${item.type ? `<span class="badge badge-type">${item.type}</span>` : ''}
+          </div>
+          <div class="text-xs space-y-1" style="color: #64748b;">
+            ${meta ? `<div><i class="fas fa-tachometer-alt w-3 mr-1"></i>${meta}</div>` : ''}
+            ${item.region ? `<div><i class="fas fa-map-marker-alt w-3 mr-1"></i>${item.region}${item.area ? ' · ' + item.area : ''}</div>` : ''}
+            ${item.seller ? `<div><i class="fas fa-user w-3 mr-1"></i>${item.seller}</div>` : ''}
+            ${item.date_added ? `<div><i class="fas fa-calendar w-3 mr-1"></i>${item.date_added}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Load Listings ───────────────────────────────────────────────
+  async function loadListings() {
+    document.getElementById('listings-loading').classList.remove('hidden');
+    document.getElementById('listings-grid').classList.add('hidden');
+    document.getElementById('pagination').classList.add('hidden');
+
+    const date   = document.getElementById('filter-date').value;
+    const brand  = document.getElementById('filter-brand').value;
+    const type   = document.getElementById('filter-type').value;
+    const minPrice = document.getElementById('filter-min-price').value;
+    const maxPrice = document.getElementById('filter-max-price').value;
+    const region = document.getElementById('filter-region').value;
+
+    const params = new URLSearchParams({ limit: currentLimit });
+    if (brand)    params.set('brand', brand);
+    if (type)     params.set('type', type);
+    if (minPrice) params.set('min_price', minPrice);
+    if (maxPrice) params.set('max_price', maxPrice);
+    if (region)   params.set('region', region);
+
+    if (date) {
+      // page-number mode
+      params.set('date', date);
+      params.set('page', currentPage);
+    } else {
+      // cursor mode — use current cursor from stack
+      const cur = cursorStack[currentCursorIdx];
+      if (cur) params.set('cursor', cur);
+    }
+
+    try {
+      const r = await fetch(`${API_BASE}/api/listings?${params}`);
+      const data = await r.json();
+      nextCursorFromApi = data.next_cursor || null;
+
+      document.getElementById('listings-loading').classList.add('hidden');
+      const grid = document.getElementById('listings-grid');
+
+      if (!data.items || data.items.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-20" style="color: #64748b;">
+          <i class="fas fa-search text-5xl mb-4 block"></i>
+          <p>Không tìm thấy xe nào phù hợp</p>
+        </div>`;
+        document.getElementById('result-count').textContent = '0';
+      } else {
+        grid.innerHTML = data.items.map(renderCard).join('');
+        if (date) {
+          totalItems = data.total;
+          document.getElementById('result-count').textContent = fmt(totalItems);
+        } else {
+          const shownTotal = statsTotal || '?';
+          document.getElementById('result-count').textContent = fmt(shownTotal);
+        }
+      }
+      grid.classList.remove('hidden');
+
+      // Pagination controls
+      if (date) {
+        const totalPages = Math.ceil((data.total || 0) / currentLimit);
+        if (totalPages > 1) {
+          document.getElementById('page-info').textContent = `Trang ${currentPage} / ${totalPages}`;
+          const prevBtn = document.getElementById('prev-btn');
+          const nextBtn = document.getElementById('next-btn');
+          prevBtn.disabled = currentPage <= 1;
+          prevBtn.className = currentPage <= 1 ? 'btn-ghost opacity-40 cursor-not-allowed' : 'btn-ghost';
+          nextBtn.disabled = currentPage >= totalPages;
+          nextBtn.className = currentPage >= totalPages ? 'btn-primary opacity-40 cursor-not-allowed' : 'btn-primary';
+          document.getElementById('pagination').classList.remove('hidden');
+        }
+      } else {
+        // cursor-based: estimate total pages from statsTotal
+        const estTotal = statsTotal || 0;
+        const estPages = estTotal ? Math.ceil(estTotal / currentLimit) : '?';
+        const hasPrev = currentCursorIdx > 0;
+        const hasNext = !!nextCursorFromApi;
+        document.getElementById('page-info').textContent = `Trang ${currentCursorIdx + 1} / ~${estPages}`;
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        prevBtn.disabled = !hasPrev;
+        prevBtn.className = !hasPrev ? 'btn-ghost opacity-40 cursor-not-allowed' : 'btn-ghost';
+        nextBtn.disabled = !hasNext;
+        nextBtn.className = !hasNext ? 'btn-primary opacity-40 cursor-not-allowed' : 'btn-primary';
+        document.getElementById('pagination').classList.remove('hidden');
+      }
+      updateUrl();
+    } catch (e) {
+      console.error('Listings error:', e);
+      document.getElementById('listings-loading').classList.add('hidden');
+      document.getElementById('listings-grid').innerHTML = `<div class="col-span-full text-center py-20" style="color: #f87171;">
+        <i class="fas fa-exclamation-triangle text-5xl mb-4 block"></i>
+        <p>Lỗi kết nối API. Vui lòng thử lại.</p>
+        <p class="text-xs mt-2">${e.message}</p>
+      </div>`;
+      document.getElementById('listings-grid').classList.remove('hidden');
+    }
+  }
+
+  function applyFilters() {
+    currentPage = 1;
+    cursorStack = [null];
+    currentCursorIdx = 0;
+    nextCursorFromApi = null;
+    loadListings();
+  }
+
+  function debounceFilters() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(applyFilters, 500);
+  }
+
+  function clearFilters() {
+    document.getElementById('filter-date').value = '';
+    document.getElementById('filter-brand').value = '';
+    document.getElementById('filter-type').value = '';
+    document.getElementById('filter-min-price').value = '';
+    document.getElementById('filter-max-price').value = '';
+    document.getElementById('filter-region').value = '';
+    applyFilters();
+  }
+
+  function changePage(delta) {
+    const date = document.getElementById('filter-date').value;
+    if (date) {
+      // page-number mode
+      const totalPages = Math.ceil(totalItems / currentLimit);
+      currentPage = Math.max(1, Math.min(totalPages, currentPage + delta));
+    } else {
+      // cursor mode
+      if (delta > 0 && nextCursorFromApi) {
+        currentCursorIdx++;
+        if (currentCursorIdx >= cursorStack.length) {
+          cursorStack.push(nextCursorFromApi);
+        }
+      } else if (delta < 0 && currentCursorIdx > 0) {
+        currentCursorIdx--;
+      }
+    }
+    loadListings();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function refreshAll() {
+    loadStats();
+    loadListings();
+  }
+
+  // ── URL sync ────────────────────────────────────────────────────
+  function updateUrl() {
+    const p = new URLSearchParams();
+    const date   = document.getElementById('filter-date').value;
+    const brand  = document.getElementById('filter-brand').value;
+    const type   = document.getElementById('filter-type').value;
+    const minP   = document.getElementById('filter-min-price').value;
+    const maxP   = document.getElementById('filter-max-price').value;
+    const region = document.getElementById('filter-region').value;
+    if (date)   p.set('date', date);
+    if (brand)  p.set('brand', brand);
+    if (type)   p.set('type', type);
+    if (minP)   p.set('min_price', minP);
+    if (maxP)   p.set('max_price', maxP);
+    if (region) p.set('region', region);
+    if (date) {
+      if (currentPage > 1) p.set('page', currentPage);
+    } else {
+      if (currentCursorIdx > 0) {
+        p.set('page', currentCursorIdx + 1);
+        p.set('cursor', cursorStack[currentCursorIdx]);
+      }
+    }
+    const qs = p.toString();
+    history.replaceState({}, '', qs ? '?' + qs : location.pathname);
+  }
+
+  function restoreFromUrl() {
+    const p = new URLSearchParams(location.search);
+    const date   = p.get('date')     || '';
+    const brand  = p.get('brand')    || '';
+    const type   = p.get('type')     || '';
+    const minP   = p.get('min_price')|| '';
+    const maxP   = p.get('max_price')|| '';
+    const region = p.get('region')   || '';
+    const page   = parseInt(p.get('page') || '1');
+    const cursor = p.get('cursor')   || '';
+    if (date)   document.getElementById('filter-date').value     = date;
+    if (brand)  document.getElementById('filter-brand').value    = brand;
+    if (type)   document.getElementById('filter-type').value     = type;
+    if (minP)   document.getElementById('filter-min-price').value= minP;
+    if (maxP)   document.getElementById('filter-max-price').value= maxP;
+    if (region) document.getElementById('filter-region').value   = region;
+    if (date) {
+      currentPage = page;
+    } else if (cursor && page > 1) {
+      currentCursorIdx = page - 1;
+      cursorStack = Array(page).fill(null);
+      cursorStack[page - 1] = cursor;
+    }
+  }
+
+  // ── Init ────────────────────────────────────────────────────────
+  restoreFromUrl();
+  loadStats();
+  loadListings();
+</script>
+</body>
+</html>
