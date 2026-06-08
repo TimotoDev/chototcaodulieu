@@ -1,0 +1,1366 @@
+{
+  "100604": {
+    "name": "Huyện Yên Mỹ",
+    "region": 1
+  },
+  "100802": {
+    "name": "Thành phố Phúc Yên",
+    "region": 1
+  },
+  "100606": {
+    "name": "Huyện Ân Thi",
+    "region": 1
+  },
+  "100102": {
+    "name": "Huyện Yên Phong",
+    "region": 1
+  },
+  "100104": {
+    "name": "Huyện Tiên Du",
+    "region": 1
+  },
+  "100106": {
+    "name": "Huyện Thuận Thành",
+    "region": 1
+  },
+  "100213": {
+    "name": "Huyện Tân Sơn",
+    "region": 1
+  },
+  "100708": {
+    "name": "Huyện Yên Mô",
+    "region": 1
+  },
+  "100301": {
+    "name": "Thành phố Phủ Lý",
+    "region": 1
+  },
+  "100201": {
+    "name": "Thành phố Việt Trì",
+    "region": 1
+  },
+  "100302": {
+    "name": "Thị xã Duy Tiên",
+    "region": 1
+  },
+  "100105": {
+    "name": "Thị xã Từ Sơn",
+    "region": 1
+  },
+  "100108": {
+    "name": "Huyện Lương Tài",
+    "region": 1
+  },
+  "100401": {
+    "name": "Thành phố Hải Dương",
+    "region": 1
+  },
+  "100107": {
+    "name": "Huyện Gia Bình",
+    "region": 1
+  },
+  "100101": {
+    "name": "Thành phố Bắc Ninh",
+    "region": 1
+  },
+  "100609": {
+    "name": "Huyện Tiên Lữ",
+    "region": 1
+  },
+  "100409": {
+    "name": "Huyện Gia Lộc",
+    "region": 1
+  },
+  "100806": {
+    "name": "Huyện Bình Xuyên",
+    "region": 1
+  },
+  "100610": {
+    "name": "Huyện Phù Cừ",
+    "region": 1
+  },
+  "100605": {
+    "name": "Thị xã Mỹ Hào",
+    "region": 1
+  },
+  "100607": {
+    "name": "Huyện Khoái Châu",
+    "region": 1
+  },
+  "100704": {
+    "name": "Huyện Gia Viễn",
+    "region": 1
+  },
+  "100603": {
+    "name": "Huyện Văn Giang",
+    "region": 1
+  },
+  "100809": {
+    "name": "Huyện Sông Lô",
+    "region": 1
+  },
+  "100304": {
+    "name": "Huyện Thanh Liêm",
+    "region": 1
+  },
+  "100303": {
+    "name": "Huyện Kim Bảng",
+    "region": 1
+  },
+  "100507": {
+    "name": "Huyện Tân Lạc",
+    "region": 1
+  },
+  "100205": {
+    "name": "Huyện Thanh Ba",
+    "region": 1
+  },
+  "100602": {
+    "name": "Huyện Văn Lâm",
+    "region": 1
+  },
+  "100608": {
+    "name": "Huyện Kim Động",
+    "region": 1
+  },
+  "100803": {
+    "name": "Huyện Lập Thạch",
+    "region": 1
+  },
+  "100403": {
+    "name": "Huyện Nam Sách",
+    "region": 1
+  },
+  "100209": {
+    "name": "Huyện Tam Nông",
+    "region": 1
+  },
+  "100501": {
+    "name": "Thành phố Hòa Bình",
+    "region": 1
+  },
+  "100804": {
+    "name": "Huyện Tam Dương",
+    "region": 1
+  },
+  "100103": {
+    "name": "Huyện Quế Võ",
+    "region": 1
+  },
+  "100410": {
+    "name": "Huyện Tứ Kỳ",
+    "region": 1
+  },
+  "100801": {
+    "name": "Thành phố Vĩnh Yên",
+    "region": 1
+  },
+  "100212": {
+    "name": "Huyện Thanh Thuỷ",
+    "region": 1
+  },
+  "100807": {
+    "name": "Huyện Yên Lạc",
+    "region": 1
+  },
+  "100402": {
+    "name": "\bThành phố Chí Linh",
+    "region": 1
+  },
+  "100211": {
+    "name": "Huyện Thanh Sơn",
+    "region": 1
+  },
+  "100701": {
+    "name": "Thành phố Ninh Bình",
+    "region": 1
+  },
+  "100808": {
+    "name": "Huyện Vĩnh Tường",
+    "region": 1
+  },
+  "201108": {
+    "name": "Thành phố Thuận An",
+    "region": 2
+  },
+  "201301": {
+    "name": "Thành phố Biên Hòa",
+    "region": 2
+  },
+  "201107": {
+    "name": "Thành phố Dĩ An",
+    "region": 2
+  },
+  "201304": {
+    "name": "Huyện Vĩnh Cửu",
+    "region": 2
+  },
+  "201106": {
+    "name": "Thị xã Tân Uyên",
+    "region": 2
+  },
+  "201302": {
+    "name": "Thành phố Long Khánh",
+    "region": 2
+  },
+  "201101": {
+    "name": "Thành phố Thủ Dầu Một",
+    "region": 2
+  },
+  "201306": {
+    "name": "Huyện Trảng Bom",
+    "region": 2
+  },
+  "201001": {
+    "name": "Thành phố Vũng Tàu",
+    "region": 2
+  },
+  "201405": {
+    "name": "Huyện Châu Thành",
+    "region": 2
+  },
+  "201207": {
+    "name": "Huyện Hớn Quản",
+    "region": 2
+  },
+  "201007": {
+    "name": "Thị xã Phú Mỹ",
+    "region": 2
+  },
+  "201202": {
+    "name": "Thành phố Đồng Xoài",
+    "region": 2
+  },
+  "201201": {
+    "name": "Thị xã Phước Long",
+    "region": 2
+  },
+  "201307": {
+    "name": "Huyện Thống Nhất",
+    "region": 2
+  },
+  "201005": {
+    "name": "Huyện Long Điền",
+    "region": 2
+  },
+  "201406": {
+    "name": "Huyện Hòa Thành",
+    "region": 2
+  },
+  "201310": {
+    "name": "Huyện Xuân Lộc",
+    "region": 2
+  },
+  "201404": {
+    "name": "Huyện Dương Minh Châu",
+    "region": 2
+  },
+  "201004": {
+    "name": "Huyện Xuyên Mộc",
+    "region": 2
+  },
+  "201102": {
+    "name": "Huyện Bàu Bàng",
+    "region": 2
+  },
+  "201401": {
+    "name": "Thành phố Tây Ninh",
+    "region": 2
+  },
+  "201104": {
+    "name": "Thị xã Bến Cát",
+    "region": 2
+  },
+  "201105": {
+    "name": "Huyện Phú Giáo",
+    "region": 2
+  },
+  "201003": {
+    "name": "Huyện Châu Đức",
+    "region": 2
+  },
+  "201309": {
+    "name": "Huyện Long Thành",
+    "region": 2
+  },
+  "201208": {
+    "name": "Huyện Đồng Phú",
+    "region": 2
+  },
+  "201002": {
+    "name": "Thành phố Bà Rịa",
+    "region": 2
+  },
+  "201311": {
+    "name": "Huyện Nhơn Trạch",
+    "region": 2
+  },
+  "201308": {
+    "name": "Huyện Cẩm Mỹ",
+    "region": 2
+  },
+  "201006": {
+    "name": "Huyện Đất Đỏ",
+    "region": 2
+  },
+  "201109": {
+    "name": "Huyện Bắc Tân Uyên",
+    "region": 2
+  },
+  "201409": {
+    "name": "Huyện Trảng Bàng",
+    "region": 2
+  },
+  "201103": {
+    "name": "Huyện Dầu Tiếng",
+    "region": 2
+  },
+  "201403": {
+    "name": "Huyện Tân Châu",
+    "region": 2
+  },
+  "201211": {
+    "name": "Huyện Phú Riềng",
+    "region": 2
+  },
+  "201303": {
+    "name": "Huyện Tân Phú",
+    "region": 2
+  },
+  "201008": {
+    "name": "Huyện Côn Đảo",
+    "region": 2
+  },
+  "201408": {
+    "name": "Huyện Bến Cầu",
+    "region": 2
+  },
+  "201209": {
+    "name": "Huyện Bù Đăng",
+    "region": 2
+  },
+  "201402": {
+    "name": "Huyện Tân Biên",
+    "region": 2
+  },
+  "201305": {
+    "name": "Huyện Định Quán",
+    "region": 2
+  },
+  "201407": {
+    "name": "Huyện Gò Dầu",
+    "region": 2
+  },
+  "201204": {
+    "name": "Huyện Bù Gia Mập",
+    "region": 2
+  },
+  "201210": {
+    "name": "Huyện Chơn Thành",
+    "region": 2
+  },
+  "201205": {
+    "name": "Huyện Lộc Ninh",
+    "region": 2
+  },
+  "201206": {
+    "name": "Huyện Bù Đốp",
+    "region": 2
+  },
+  "301701": {
+    "name": "Quận Liên Chiểu",
+    "region": 3
+  },
+  "301706": {
+    "name": "Quận Cẩm Lệ",
+    "region": 3
+  },
+  "301704": {
+    "name": "Quận Sơn Trà",
+    "region": 3
+  },
+  "301707": {
+    "name": "Huyện Hòa Vang",
+    "region": 3
+  },
+  "301702": {
+    "name": "Quận Thanh Khê",
+    "region": 3
+  },
+  "301703": {
+    "name": "Quận Hải Châu",
+    "region": 3
+  },
+  "301602": {
+    "name": "Thành phố Hội An",
+    "region": 3
+  },
+  "301705": {
+    "name": "Quận Ngũ Hành Sơn",
+    "region": 3
+  },
+  "301601": {
+    "name": "Thành phố Tam Kỳ",
+    "region": 3
+  },
+  "301606": {
+    "name": "Thị xã Điện Bàn",
+    "region": 3
+  },
+  "301607": {
+    "name": "Huyện Duy Xuyên",
+    "region": 3
+  },
+  "301616": {
+    "name": "Huyện Núi Thành",
+    "region": 3
+  },
+  "301605": {
+    "name": "Huyện Đại Lộc",
+    "region": 3
+  },
+  "301608": {
+    "name": "Huyện Quế Sơn",
+    "region": 3
+  },
+  "301612": {
+    "name": "Huyện Thăng Bình",
+    "region": 3
+  },
+  "301617": {
+    "name": "Huyện Phú Ninh",
+    "region": 3
+  },
+  "401908": {
+    "name": "Huyện Thuỷ Nguyên",
+    "region": 4
+  },
+  "401904": {
+    "name": "Quận Hải An",
+    "region": 4
+  },
+  "401903": {
+    "name": "Quận Lê Chân",
+    "region": 4
+  },
+  "402103": {
+    "name": "Huyện Hưng Hà",
+    "region": 4
+  },
+  "401901": {
+    "name": "Quận Hồng Bàng",
+    "region": 4
+  },
+  "402001": {
+    "name": "Thành phố Nam Định",
+    "region": 4
+  },
+  "401909": {
+    "name": "Huyện An Dương",
+    "region": 4
+  },
+  "401910": {
+    "name": "Huyện An Lão",
+    "region": 4
+  },
+  "401902": {
+    "name": "Quận Ngô Quyền",
+    "region": 4
+  },
+  "401911": {
+    "name": "Huyện Kiến Thuỵ",
+    "region": 4
+  },
+  "401905": {
+    "name": "Quận Kiến An",
+    "region": 4
+  },
+  "401906": {
+    "name": "Quận Đồ Sơn",
+    "region": 4
+  },
+  "402105": {
+    "name": "Huyện Thái Thụy",
+    "region": 4
+  },
+  "402009": {
+    "name": "Huyện Giao Thủy",
+    "region": 4
+  },
+  "402104": {
+    "name": "Huyện Đông Hưng",
+    "region": 4
+  },
+  "402101": {
+    "name": "Thành phố Thái Bình",
+    "region": 4
+  },
+  "402005": {
+    "name": "Huyện Nghĩa Hưng",
+    "region": 4
+  },
+  "402003": {
+    "name": "Huyện Vụ Bản",
+    "region": 4
+  },
+  "401913": {
+    "name": "Huyện Vĩnh Bảo",
+    "region": 4
+  },
+  "402102": {
+    "name": "Huyện Quỳnh Phụ",
+    "region": 4
+  },
+  "402007": {
+    "name": "Huyện Trực Ninh",
+    "region": 4
+  },
+  "402106": {
+    "name": "Huyện Tiền Hải",
+    "region": 4
+  },
+  "401907": {
+    "name": "Quận Dương Kinh",
+    "region": 4
+  },
+  "402010": {
+    "name": "Huyện Hải Hậu",
+    "region": 4
+  },
+  "402006": {
+    "name": "Huyện Nam Trực",
+    "region": 4
+  },
+  "402108": {
+    "name": "Huyện Vũ Thư",
+    "region": 4
+  },
+  "402008": {
+    "name": "Huyện Xuân Trường",
+    "region": 4
+  },
+  "401912": {
+    "name": "Huyện Tiên Lãng",
+    "region": 4
+  },
+  "503605": {
+    "name": "Huyện Tam Bình",
+    "region": 5
+  },
+  "502406": {
+    "name": "Huyện Châu Phú",
+    "region": 5
+  },
+  "502701": {
+    "name": "Quận Ninh Kiều",
+    "region": 5
+  },
+  "502708": {
+    "name": "Huyện Phong Điền",
+    "region": 5
+  },
+  "502401": {
+    "name": "Thành phố Long Xuyên",
+    "region": 5
+  },
+  "502702": {
+    "name": "Quận Ô Môn",
+    "region": 5
+  },
+  "502407": {
+    "name": "Huyện Tịnh Biên",
+    "region": 5
+  },
+  "502911": {
+    "name": "Huyện Lai Vung",
+    "region": 5
+  },
+  "502408": {
+    "name": "Huyện Tri Tôn",
+    "region": 5
+  },
+  "503602": {
+    "name": "Huyện Long Hồ",
+    "region": 5
+  },
+  "502601": {
+    "name": "Thành phố Bến Tre",
+    "region": 5
+  },
+  "503401": {
+    "name": "Thành phố Mỹ Tho",
+    "region": 5
+  },
+  "503407": {
+    "name": "Huyện Châu Thành",
+    "region": 5
+  },
+  "502704": {
+    "name": "Quận Cái Răng",
+    "region": 5
+  },
+  "503101": {
+    "name": "Thành phố Rạch Giá",
+    "region": 5
+  },
+  "502410": {
+    "name": "Huyện Chợ Mới",
+    "region": 5
+  },
+  "502602": {
+    "name": "Huyện Châu Thành",
+    "region": 5
+  },
+  "503601": {
+    "name": "Thành phố Vĩnh Long",
+    "region": 5
+  },
+  "502907": {
+    "name": "Huyện Tháp Mười",
+    "region": 5
+  },
+  "502703": {
+    "name": "Quận Bình Thuỷ",
+    "region": 5
+  },
+  "503214": {
+    "name": "Huyện Cần Giuộc",
+    "region": 5
+  },
+  "502608": {
+    "name": "Huyện Thạnh Phú",
+    "region": 5
+  },
+  "503210": {
+    "name": "Huyện Bến Lức",
+    "region": 5
+  },
+  "502402": {
+    "name": "Thành phố Châu Đốc",
+    "region": 5
+  },
+  "503201": {
+    "name": "Thành phố Tân An",
+    "region": 5
+  },
+  "502709": {
+    "name": "Huyện Thới Lai",
+    "region": 5
+  },
+  "502705": {
+    "name": "Quận Thốt Nốt",
+    "region": 5
+  },
+  "503301": {
+    "name": "Thành phố Sóc Trăng",
+    "region": 5
+  },
+  "503215": {
+    "name": "Huyện Châu Thành",
+    "region": 5
+  },
+  "503309": {
+    "name": "Huyện Thạnh Trị",
+    "region": 5
+  },
+  "502609": {
+    "name": "Huyện Mỏ Cày Bắc",
+    "region": 5
+  },
+  "503606": {
+    "name": "Thị xã Bình Minh",
+    "region": 5
+  },
+  "503507": {
+    "name": "Huyện Trà Cú",
+    "region": 5
+  },
+  "604001": {
+    "name": "Thành phố Huế",
+    "region": 6
+  },
+  "603904": {
+    "name": "Huyện Hướng Hóa",
+    "region": 6
+  },
+  "604006": {
+    "name": "Thị xã Hương Trà",
+    "region": 6
+  },
+  "603801": {
+    "name": "Thành Phố Đồng Hới",
+    "region": 6
+  },
+  "604008": {
+    "name": "Huyện Phú Lộc",
+    "region": 6
+  },
+  "604005": {
+    "name": "Thị xã Hương Thủy",
+    "region": 6
+  },
+  "603806": {
+    "name": "Huyện Quảng Ninh",
+    "region": 6
+  },
+  "603901": {
+    "name": "Thành phố Đông Hà",
+    "region": 6
+  },
+  "603905": {
+    "name": "Huyện Gio Linh",
+    "region": 6
+  },
+  "603807": {
+    "name": "Huyện Lệ Thủy",
+    "region": 6
+  },
+  "603808": {
+    "name": "Thị xã Ba Đồn",
+    "region": 6
+  },
+  "604004": {
+    "name": "Huyện Phú Vang",
+    "region": 6
+  },
+  "604009": {
+    "name": "Huyện Nam Đông",
+    "region": 6
+  },
+  "604002": {
+    "name": "Huyện Phong Điền",
+    "region": 6
+  },
+  "603909": {
+    "name": "Huyện Hải Lăng",
+    "region": 6
+  },
+  "603908": {
+    "name": "Huyện Triệu Phong",
+    "region": 6
+  },
+  "704701": {
+    "name": "Thành phố Quảng Ngãi",
+    "region": 7
+  },
+  "704301": {
+    "name": "Thành phố Qui Nhơn",
+    "region": 7
+  },
+  "704505": {
+    "name": "Huyện Ninh Phước",
+    "region": 7
+  },
+  "704601": {
+    "name": "Thành phố Tuy Hòa",
+    "region": 7
+  },
+  "704201": {
+    "name": "Thành phố Phan Thiết",
+    "region": 7
+  },
+  "704310": {
+    "name": "Huyện Tuy Phước",
+    "region": 7
+  },
+  "704401": {
+    "name": "Thành phố Nha Trang",
+    "region": 7
+  },
+  "704407": {
+    "name": "Huyện Diên Khánh",
+    "region": 7
+  },
+  "704403": {
+    "name": "Huyện Cam Lâm",
+    "region": 7
+  },
+  "704706": {
+    "name": "Huyện Tư Nghĩa",
+    "region": 7
+  },
+  "704507": {
+    "name": "Huyện Thuận Nam",
+    "region": 7
+  },
+  "704208": {
+    "name": "Huyện Đức Linh",
+    "region": 7
+  },
+  "704501": {
+    "name": "Thành phố Phan Rang-Tháp Chàm",
+    "region": 7
+  },
+  "704502": {
+    "name": "Huyện Bác Ái",
+    "region": 7
+  },
+  "704308": {
+    "name": "Huyện Phù Cát",
+    "region": 7
+  },
+  "704307": {
+    "name": "Huyện Tây Sơn",
+    "region": 7
+  },
+  "704309": {
+    "name": "Thị xã An Nhơn",
+    "region": 7
+  },
+  "704711": {
+    "name": "Huyện Mộ Đức",
+    "region": 7
+  },
+  "704405": {
+    "name": "Thị xã Ninh Hòa",
+    "region": 7
+  },
+  "704206": {
+    "name": "Huyện Hàm Thuận Nam",
+    "region": 7
+  },
+  "704202": {
+    "name": "Thị xã La Gi",
+    "region": 7
+  },
+  "704203": {
+    "name": "Huyện Tuy Phong",
+    "region": 7
+  },
+  "704504": {
+    "name": "Huyện Ninh Hải",
+    "region": 7
+  },
+  "704705": {
+    "name": "Huyện Sơn Tịnh",
+    "region": 7
+  },
+  "704305": {
+    "name": "Huyện Phù Mỹ",
+    "region": 7
+  },
+  "704205": {
+    "name": "Huyện Hàm Thuận Bắc",
+    "region": 7
+  },
+  "704702": {
+    "name": "Huyện Bình Sơn",
+    "region": 7
+  },
+  "704710": {
+    "name": "Huyện Nghĩa Hành",
+    "region": 7
+  },
+  "704713": {
+    "name": "Huyện Ba Tơ",
+    "region": 7
+  },
+  "704602": {
+    "name": "Thị xã Sông Cầu",
+    "region": 7
+  },
+  "704209": {
+    "name": "Huyện Hàm Tân",
+    "region": 7
+  },
+  "704204": {
+    "name": "Huyện Bắc Bình",
+    "region": 7
+  },
+  "704607": {
+    "name": "Huyện Tây Hòa",
+    "region": 7
+  },
+  "704606": {
+    "name": "Huyện Sông Hinh",
+    "region": 7
+  },
+  "704503": {
+    "name": "Huyện Ninh Sơn",
+    "region": 7
+  },
+  "805001": {
+    "name": "Thành phố Vinh",
+    "region": 8
+  },
+  "804913": {
+    "name": "Thị xã Kỳ Anh",
+    "region": 8
+  },
+  "805019": {
+    "name": "Huyện Nam Đàn",
+    "region": 8
+  },
+  "805115": {
+    "name": "Huyện Thọ Xuân",
+    "region": 8
+  },
+  "805124": {
+    "name": "Huyện Nông Cống",
+    "region": 8
+  },
+  "804908": {
+    "name": "Huyện Hương Khê",
+    "region": 8
+  },
+  "805017": {
+    "name": "Huyện Thanh Chương",
+    "region": 8
+  },
+  "805013": {
+    "name": "Huyện Anh Sơn",
+    "region": 8
+  },
+  "805020": {
+    "name": "Huyện Hưng Nguyên",
+    "region": 8
+  },
+  "804901": {
+    "name": "Thành phố Hà Tĩnh",
+    "region": 8
+  },
+  "805126": {
+    "name": "Huyện Quảng Xương",
+    "region": 8
+  },
+  "805119": {
+    "name": "Huyện Hoằng Hóa",
+    "region": 8
+  },
+  "805127": {
+    "name": "Thị xã Nghi Sơn",
+    "region": 8
+  },
+  "805118": {
+    "name": "Huyện Thiệu Hóa",
+    "region": 8
+  },
+  "805016": {
+    "name": "Huyện Đô Lương",
+    "region": 8
+  },
+  "804909": {
+    "name": "Huyện Thạch Hà",
+    "region": 8
+  },
+  "804904": {
+    "name": "Huyện Đức Thọ",
+    "region": 8
+  },
+  "805101": {
+    "name": "Thành phố Thanh Hóa",
+    "region": 8
+  },
+  "805015": {
+    "name": "Huyện Yên Thành",
+    "region": 8
+  },
+  "805114": {
+    "name": "Huyện Yên Định",
+    "region": 8
+  },
+  "805121": {
+    "name": "Huyện Nga Sơn",
+    "region": 8
+  },
+  "805010": {
+    "name": "Huyện Quỳnh Lưu",
+    "region": 8
+  },
+  "805021": {
+    "name": "Thị xã Hoàng Mai",
+    "region": 8
+  },
+  "805117": {
+    "name": "Huyện Triệu Sơn",
+    "region": 8
+  },
+  "805102": {
+    "name": "Thị xã Bỉm Sơn",
+    "region": 8
+  },
+  "805120": {
+    "name": "Huyện Hậu Lộc",
+    "region": 8
+  },
+  "805103": {
+    "name": "Thành phố Sầm Sơn",
+    "region": 8
+  },
+  "805113": {
+    "name": "Huyện Vĩnh Lộc",
+    "region": 8
+  },
+  "805014": {
+    "name": "Huyện Diễn Châu",
+    "region": 8
+  },
+  "805111": {
+    "name": "Huyện Thạch Thành",
+    "region": 8
+  },
+  "905301": {
+    "name": "Thành phố Buôn Ma Thuột",
+    "region": 9
+  },
+  "905701": {
+    "name": "Thành phố Đà Lạt",
+    "region": 9
+  },
+  "905601": {
+    "name": "Thành phố Pleiku",
+    "region": 9
+  },
+  "905306": {
+    "name": "Huyện Cư M'gar",
+    "region": 9
+  },
+  "905315": {
+    "name": "Huyện Cư Kuin",
+    "region": 9
+  },
+  "905709": {
+    "name": "Huyện Bảo Lâm",
+    "region": 9
+  },
+  "905707": {
+    "name": "Huyện Đức Trọng",
+    "region": 9
+  },
+  "905308": {
+    "name": "Huyện Krông Năng",
+    "region": 9
+  },
+  "905503": {
+    "name": "Huyện Ngọc Hồi",
+    "region": 9
+  },
+  "905702": {
+    "name": "Thành phố Bảo Lộc",
+    "region": 9
+  },
+  "905407": {
+    "name": "Huyện Đắk R'Lấp",
+    "region": 9
+  },
+  "905311": {
+    "name": "Huyện Krông Bông",
+    "region": 9
+  },
+  "905307": {
+    "name": "Huyện Krông Búk",
+    "region": 9
+  },
+  "905501": {
+    "name": "Thành phố Kon Tum",
+    "region": 9
+  },
+  "905310": {
+    "name": "Huyện M'Đrắk",
+    "region": 9
+  },
+  "905617": {
+    "name": "Huyện Chư Pưh",
+    "region": 9
+  },
+  "905312": {
+    "name": "Huyện Krông Pắc",
+    "region": 9
+  },
+  "905705": {
+    "name": "Huyện Lâm Hà",
+    "region": 9
+  },
+  "905313": {
+    "name": "Huyện Krông A Na",
+    "region": 9
+  },
+  "905711": {
+    "name": "Huyện Đạ Tẻh",
+    "region": 9
+  },
+  "905708": {
+    "name": "Huyện Di Linh",
+    "region": 9
+  },
+  "905302": {
+    "name": "Thị Xã Buôn Hồ",
+    "region": 9
+  },
+  "905604": {
+    "name": "Huyện KBang",
+    "region": 9
+  },
+  "905303": {
+    "name": "Huyện Ea H'leo",
+    "region": 9
+  },
+  "905403": {
+    "name": "Huyện Cư Jút",
+    "region": 9
+  },
+  "905611": {
+    "name": "Huyện Chư Prông",
+    "region": 9
+  },
+  "905706": {
+    "name": "Huyện Đơn Dương",
+    "region": 9
+  },
+  "905309": {
+    "name": "Huyện Ea Kar",
+    "region": 9
+  },
+  "905402": {
+    "name": "Huyện Đăk Glong",
+    "region": 9
+  },
+  "905406": {
+    "name": "Huyện Đắk Song",
+    "region": 9
+  },
+  "905605": {
+    "name": "Huyện Đăk Đoa",
+    "region": 9
+  },
+  "905405": {
+    "name": "Huyện Krông Nô",
+    "region": 9
+  },
+  "905408": {
+    "name": "Huyện Tuy Đức",
+    "region": 9
+  },
+  "905401": {
+    "name": "Thành phố Gia Nghĩa",
+    "region": 9
+  },
+  "1006113": {
+    "name": "Huyện Thạch An",
+    "region": 10
+  },
+  "1006208": {
+    "name": "Huyện Hoàng Su Phì",
+    "region": 10
+  },
+  "1006007": {
+    "name": "Huyện Sơn Động",
+    "region": 10
+  },
+  "1006507": {
+    "name": "Huyện Sơn Dương",
+    "region": 10
+  },
+  "1013001": {
+    "name": "Thành phố Hạ Long",
+    "region": 10
+  },
+  "1006001": {
+    "name": "Thành phố Bắc Giang",
+    "region": 10
+  },
+  "1006008": {
+    "name": "Huyện Yên Dũng",
+    "region": 10
+  },
+  "1006401": {
+    "name": "Thành phố Thái Nguyên",
+    "region": 10
+  },
+  "1006501": {
+    "name": "Thành phố Tuyên Quang",
+    "region": 10
+  },
+  "1006002": {
+    "name": "Huyện Yên Thế",
+    "region": 10
+  },
+  "1006009": {
+    "name": "Huyện Việt Yên",
+    "region": 10
+  },
+  "1006005": {
+    "name": "Huyện Lục Nam",
+    "region": 10
+  },
+  "1006003": {
+    "name": "Huyện Tân Yên",
+    "region": 10
+  },
+  "1006405": {
+    "name": "Huyện Đồng Hỷ",
+    "region": 10
+  },
+  "1005901": {
+    "name": "Thành Phố Bắc Kạn",
+    "region": 10
+  },
+  "1006409": {
+    "name": "Huyện Phú Bình",
+    "region": 10
+  },
+  "1006204": {
+    "name": "Huyện Yên Minh",
+    "region": 10
+  },
+  "1006207": {
+    "name": "Huyện Bắc Mê",
+    "region": 10
+  },
+  "1006402": {
+    "name": "Thành phố Sông Công",
+    "region": 10
+  },
+  "1005908": {
+    "name": "Huyện Na Rì",
+    "region": 10
+  },
+  "1006010": {
+    "name": "Huyện Hiệp Hòa",
+    "region": 10
+  },
+  "1013002": {
+    "name": "Thành phố Móng Cái",
+    "region": 10
+  },
+  "1107001": {
+    "name": "Thành phố Sơn La",
+    "region": 11
+  },
+  "1106701": {
+    "name": "Thành phố Điện Biên Phủ",
+    "region": 11
+  },
+  "12079": {
+    "name": "Quận Cầu Giấy",
+    "region": 12
+  },
+  "12121": {
+    "name": "Quận Nam Từ Liêm",
+    "region": 12
+  },
+  "12086": {
+    "name": "Quận Hà Đông",
+    "region": 12
+  },
+  "12074": {
+    "name": "Quận Ba Đình",
+    "region": 12
+  },
+  "12129": {
+    "name": "Quận Bắc Từ Liêm",
+    "region": 12
+  },
+  "12078": {
+    "name": "Quận Tây Hồ",
+    "region": 12
+  },
+  "12127": {
+    "name": "Huyện Thanh Oai",
+    "region": 12
+  },
+  "12080": {
+    "name": "Quận Hoàng Mai",
+    "region": 12
+  },
+  "12084": {
+    "name": "Huyện Thanh Trì",
+    "region": 12
+  },
+  "12075": {
+    "name": "Quận Đống Đa",
+    "region": 12
+  },
+  "12087": {
+    "name": "Thị xã Sơn Tây",
+    "region": 12
+  },
+  "12089": {
+    "name": "Huyện Hoài Đức",
+    "region": 12
+  },
+  "13112": {
+    "name": "Quận Tân Bình",
+    "region": 13
+  },
+  "13102": {
+    "name": "Quận 7",
+    "region": 13
+  },
+  "13119": {
+    "name": "Thành phố Thủ Đức",
+    "region": 13
+  },
+  "13108": {
+    "name": "Quận Bình Tân",
+    "region": 13
+  },
+  "13107": {
+    "name": "Quận 12",
+    "region": 13
+  },
+  "13113": {
+    "name": "Quận Tân Phú",
+    "region": 13
+  },
+  "13110": {
+    "name": "Quận Gò Vấp",
+    "region": 13
+  },
+  "13109": {
+    "name": "Quận Bình Thạnh",
+    "region": 13
+  },
+  "13115": {
+    "name": "Huyện Bình Chánh",
+    "region": 13
+  },
+  "13103": {
+    "name": "Quận 8",
+    "region": 13
+  },
+  "13117": {
+    "name": "Huyện Hóc Môn",
+    "region": 13
+  },
+  "13106": {
+    "name": "Quận 11",
+    "region": 13
+  },
+  "13118": {
+    "name": "Huyện Nhà Bè",
+    "region": 13
+  },
+  "13101": {
+    "name": "Quận 6",
+    "region": 13
+  },
+  "13099": {
+    "name": "Quận 4",
+    "region": 13
+  },
+  "13098": {
+    "name": "Quận 3",
+    "region": 13
+  },
+  "13105": {
+    "name": "Quận 10",
+    "region": 13
+  },
+  "13096": {
+    "name": "Quận 1",
+    "region": 13
+  },
+  "13116": {
+    "name": "Huyện Củ Chi",
+    "region": 13
+  },
+  "13100": {
+    "name": "Quận 5",
+    "region": 13
+  },
+  "13111": {
+    "name": "Quận Phú Nhuận",
+    "region": 13
+  }
+}
