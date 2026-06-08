@@ -163,9 +163,9 @@ def scrape_region(region_name: str, region_code: int) -> list:
             if len(ads) < LIMIT:
                 break
 
-            # Dừng trước giới hạn 20k của Chotot
-            if (page * LIMIT) >= 19_900:
-                print(f"\n    ⚠️  Gần giới hạn 20k — dừng tỉnh này")
+            # Dừng trước giới hạn 30k của Chotot
+            if (page * LIMIT) >= 300000:
+                print(f"\n    ⚠️  Gần giới hạn 30k — dừng tỉnh này")
                 break
 
             page += 1
@@ -200,7 +200,7 @@ def main():
     print("🏍️  CHOTOT SCRAPER – FULL 60K (REGION MODE)")
     print("=" * 60)
     print(f"⏱  Bắt đầu: {datetime.now().strftime('%H:%M:%S %d/%m/%Y')}")
-    print(f"📍 Cào theo {len(REGIONS)} tỉnh/thành → bypass giới hạn 20k\n")
+    print(f"📍 Cào theo {len(REGIONS)} tỉnh/thành → bypass giới hạn 30k\n")
 
     all_records = []
     seen_ids    = set()
