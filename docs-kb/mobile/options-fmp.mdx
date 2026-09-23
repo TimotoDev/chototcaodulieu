@@ -1,0 +1,119 @@
+---
+title: "TMA Options Catalog and FMP Preliminary Range"
+sidebarTitle: "Mobile Options FMP"
+description: "GET /api/v1/options AllowAny no trailing slash. Static Python lists not Bike DISTINCT. price-range uses options_fairmarketprice 0.7x to 1.1x FMP round 100000. Response field price_source fmp or depreciation_curve. Nearest year uses warning string not year_matched. Curve fallback can 404 or 400."
+---
+
+# 1. Overview and Business Intent
+
+Registration needs dropdowns and a preliminary price band (gia so bo) before AI or OPS. Ops imports Fair Market Price into `options_fairmarketprice`. Formula: min = 0.7 times FMP, max = 1.1 times FMP, round to 100000 VND.
+
+**Not dealer catalog.** Brands come from `VIETNAMESE_BIKE_BRANDS` in `data.py`. Bike DISTINCT query is commented out.
+
+**Target files:** `backend/apps/options/views.py`, `models.py`, `data.py`, `management/commands/import_fmp_csv.py`.
+
+---
+
+# 2. End-to-End Flow and Sequence Diagram
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Rider as RN registration
+  participant Opt as GET /api/v1/options
+  participant FMP as options_fairmarketprice
+  participant Curve as depreciation data
+
+  Rider->>Opt: GET /options/brands
+  Opt-->>Rider: static list plus CDN logos
+  Rider->>Opt: GET /options/price-range brand model year
+  Opt->>FMP: find_fmp_record
+  alt row found
+    Opt-->>Rider: 200 price_source fmp fmp_vnd maybe warning
+  else miss then curve
+    alt unknown brand or model
+      Opt-->>Rider: 404 detail
+    else stop_year
+      Opt-->>Rider: 400 detail
+    else ok
+      Opt-->>Rider: 200 price_source depreciation_curve
+    end
+  end
+```
+
+`price-range` is `get_motorcycle_price_range`. `price-range-simple` is a different helper.
+
+---
+
+# 3. Detailed API Contracts
+
+All GET, AllowAny, paths **without** trailing slash.
+
+| Method | Path | Query | Source |
+| --- | --- | --- | --- |
+| GET | `/options/brands` | none | VIETNAMESE_BIKE_BRANDS |
+| GET | `/options/models` | brand | BIKE_MODELS; empty brand → 400 data empty list |
+| GET | `/options/years` | none | YEARS |
+| GET | `/options/mileage-options` and `/options/mileage` | none | MILEAGE_OPTIONS |
+| GET | `/options/document-types` | none | DOCUMENT_TYPE_OPTIONS |
+| GET | `/options/warranty-options` and `/options/warranty` | none | WARRANTY_OPTIONS |
+| GET | `/options/condition-options` and `/options/condition` | none | CONDITION_OPTIONS |
+| GET | `/options/cities` | none | VIETNAMESE_CITIES |
+| GET | `/options/provinces` | none | VIETNAMESE_PROVINCES |
+| GET | `/options/price-range` | brand model year required | FMP then curves |
+| GET | `/options/price-range-simple` | helper | get_price_range |
+
+price-range validation: missing brand/model/year → 400; year not int → 400; year less than 1990 or greater than current year plus 1 → 400.
+
+FMP match order: iexact brand+model, space-insensitive model, containment (longest model wins), nearest year if needed.
+
+**FMP hit response fields (actual):** `brand`, `model`, `year`, `type`, `min_price_vnd`, `max_price_vnd`, `price_range_million`, `fmp_vnd`, `price_source` = `"fmp"`, `age`. If nearest year: optional **`warning`** string. There is **no** `year_matched` boolean and **no** `source` field in the JSON.
+
+**Curve fallback:** `price_source` = `"depreciation_curve"` plus `tier`, `depreciation_factor`, `base_price`. Unknown brand/model → **404**. Year past `stop_year` → **400**. Not always 200.
+
+Constants: `FMP_MIN_RATE = 0.7`, `FMP_MAX_RATE = 1.1`, `FMP_ROUND_TO_VND = 100000`.
+
+| HTTP Code | Error | Trigger |
+| --- | --- | --- |
+| 400 | brand parameter is required | empty brand |
+| 400 | Year must be between 1990 and Y | out of range |
+| 404 | Brand not found / Model not found | curve path |
+| 400 | stopped production | stop_year |
+| 200 | FMP or curve JSON | valid query with data |
+
+---
+
+# 4. Database Schema and Locks
+
+```sql
+CREATE TABLE options_fairmarketprice (
+    id BIGSERIAL PRIMARY KEY,
+    brand VARCHAR(64) NOT NULL,
+    model VARCHAR(128) NOT NULL,
+    year INTEGER NOT NULL,
+    age INTEGER,
+    fmp_vnd BIGINT NOT NULL,
+    dealer_price_vnd BIGINT,
+    bike_type VARCHAR(64) NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT uniq_fmp_brand_model_year UNIQUE (brand, model, year)
+);
+```
+
+Writers: `manage.py import_fmp_csv` (CSV and/or bundled JSON, optional `--replace`). No FOR UPDATE on GET.
+
+---
+
+# 5. Frontend and UI Logic
+
+Registration uses lists before Bike exists. Logos via `to_cdn_url`. price-range is public AllowAny — FMP table is scrapable.
+
+---
+
+# 6. Edge Cases and Resilience
+
+1. Nearest-year FMP still applies 0.7/1.1 only — no extra depreciation.
+2. UniqueConstraint case-sensitive in SQL; lookup is iexact.
+3. Containment can map Vision to Vision 110 FMP.
+4. Do not confuse with `price-range-simple`.

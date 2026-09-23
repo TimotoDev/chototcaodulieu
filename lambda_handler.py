@@ -81,18 +81,21 @@ def _export_daily_csv_to_s3(raw_records: list, day_str: str) -> tuple[int, str]:
 
 
 def handler(event: dict, context) -> dict:
-    from chotot import scrape_yesterday, upsert_to_dynamodb
+    from chotot import scrape_day, scrape_yesterday, upsert_to_dynamodb
 
     tz_vn = timezone(timedelta(hours=7))
     now_vn = datetime.now(tz_vn)
-    scrape_day = (now_vn - timedelta(days=1)).date().isoformat()
+    target_day = event.get("scrape_date") or (now_vn - timedelta(days=1)).date().isoformat()
 
-    log.info(json.dumps({"event": "start", "now_vn": now_vn.isoformat()}))
+    log.info(json.dumps({"event": "start", "now_vn": now_vn.isoformat(), "scrape_date": target_day}))
 
     dry_run = event.get("dry_run", False)
 
-    raw_records = scrape_yesterday()
-    log.info(f"Scraped {len(raw_records)} records từ {scrape_day}")
+    if event.get("scrape_date"):
+        raw_records = scrape_day(target_day)
+    else:
+        raw_records = scrape_yesterday()
+    log.info(f"Scraped {len(raw_records)} records từ {target_day}")
 
     written = 0
     if raw_records and not dry_run:
@@ -102,7 +105,7 @@ def handler(event: dict, context) -> dict:
     csv_key = ""
     if raw_records and not dry_run and S3_BUCKET:
         try:
-            csv_rows, csv_key = _export_daily_csv_to_s3(raw_records, scrape_day)
+            csv_rows, csv_key = _export_daily_csv_to_s3(raw_records, target_day)
             log.info(json.dumps({"event": "daily_csv_uploaded", "rows": csv_rows, "s3_key": csv_key}))
         except Exception as e:
             log.error(f"Daily CSV upload failed: {e}")

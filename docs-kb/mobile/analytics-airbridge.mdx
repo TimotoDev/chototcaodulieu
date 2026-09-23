@@ -1,0 +1,126 @@
+---
+title: "TMA Analytics Facade, Consent, Airbridge Deeplink"
+sidebarTitle: "Mobile Analytics Airbridge"
+description: "analytics.track identify screen are no-ops even when ENABLE_ANALYTICS and consent. Consent AsyncStorage key is @analytics/consent_granted. AnalyticsBinder mounts in AppNavigator; setupAirbridge in apps/index.js. PostHog still captures app_opened and screen via navigationRef. Airbridge logs URL only in __DEV__."
+---
+
+# 1. Overview and Business Intent
+
+Product defined funnel event names in `analyticsEvents.ts` without shipping PII (no phone, email, name, plate; bike UUID allowed). Implementation split:
+
+1. **Facade** `analytics.ts` — `track` / `identify` / `screen` are no-ops even when active (PostHog removed from this surface; API kept to avoid refactors).
+2. **Binder** `AnalyticsBinder.tsx` — if `ENABLE_ANALYTICS`, mounts `PostHogProvider` and can capture `app_opened` plus screen names via `trackPostHogScreenFromNavigation`.
+
+**Actors:** screens calling `analytics.track`, `App.tsx`, `AppNavigator.tsx`, `apps/index.js`, Airbridge SDK.
+
+**Target files:** `apps/src/services/analytics/*`, `airbridge.ts`, `configs/app.config.ts`.
+
+---
+
+# 2. End-to-End Flow and Sequence Diagram
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Index as apps/index.js
+  participant App as App.tsx
+  participant Nav as AppNavigator
+  participant Consent as AnalyticsConsentEffect
+  participant AS as AsyncStorage
+  participant Binder as PostHogClientBinder
+  participant Facade as analytics.track
+
+  Index->>Index: setupAirbridge
+  App->>Consent: mount
+  Consent->>AS: get @analytics/consent_granted
+  Consent->>Facade: setAnalyticsConsentInMemory
+  Nav->>Binder: AnalyticsBinder wraps navigator
+  Binder->>Binder: capture app_opened once
+  Nav->>Binder: onNavigationStateChange trackPostHogScreenFromNavigation
+  Note over Facade: track identify screen remain no-op
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> disabled: ENABLE_ANALYTICS false or consent false
+  disabled --> enabled: both true
+  note right of enabled: facade still no-ops track
+```
+
+`active()` is `AppConfig.FEATURES.ENABLE_ANALYTICS && consentGranted`. Default `ENABLE_ANALYTICS` is true in app.config. `reset()` is empty; logout still calls it and does **not** clear consent storage.
+
+---
+
+# 3. Detailed API Contracts (client)
+
+No Django routes.
+
+Consent key: **`@analytics/consent_granted`** values `'1'` or `'0'`. (Docs that say `at-analytics` without the at-sign are wrong.)
+
+| Behavior | Trigger |
+| --- | --- |
+| consent false | missing key or not `'1'` |
+| track no-op | always discards even when active |
+| screen skipped in helper | ENABLE_ANALYTICS false OR empty trimmed API_KEY |
+| provider disabled option | raw API_KEY falsy (no trim) — whitespace-only edge case |
+
+`AnalyticsEvents` literals include auth_started, otp_requested, otp_verified, login_success, zalo_auth_started, apple_auth_started, auth_onboarding_completed, registration_started, step1_completed, video_recorded, ocr_scan_attempted/success/failed, bike_quality_gate_*, evaluation_requested, schedule_set, home_viewed, ebike_section_viewed, news_article_opened, bike_exterior_eval_*, bike_engine_stage1_*, bike_full_eval_*.
+
+`bindPostHogClient` only stores an object with `screen()`. Facade `track` never calls it.
+
+`ANALYTICS_PRIVACY_CHECKLIST_VERSION` is `'1.0'`. EU consent gating is documented in comments as not implemented in this spike.
+
+Airbridge: `Airbridge.setOnDeeplinkReceived` — `__DEV__` console.log only. No navigate, no campaign parse.
+
+---
+
+# 4. Database Schema and Locks
+
+```sql
+CREATE TABLE analytics_consent_asyncstorage (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+-- key = @analytics/consent_granted, value 1 or 0
+```
+
+Not a Postgres table.
+
+---
+
+# 5. Frontend and UI Logic
+
+Mount map:
+
+- `setupAirbridge()` — `apps/index.js`
+- `AnalyticsConsentEffect` — `App.tsx`
+- `AnalyticsBinder` — wraps navigator in `AppNavigator.tsx`
+- `trackPostHogScreenFromNavigation` — `onNavigationStateChange` and `onNavigationReady`
+
+If `ENABLE_ANALYTICS` is false, binder returns children with no PostHogProvider. If true, provider mounts even when API_KEY empty (`options.disabled` true).
+
+---
+
+# 6. Edge Cases and Resilience
+
+1. Funnel `analytics.track` calls never reach PostHog — dashboards stay empty for those events.
+2. `app_opened` can fire before consent loads (binder does not gate on consent).
+3. Logout does not clear AsyncStorage consent.
+4. Production Airbridge callback ignores URL.
+5. Queue files analytics.ts, AnalyticsBinder, analyticsEvents, analyticsConsent, analyticsPrivacy, index, airbridge are one surface.
+
+
+---
+
+# Appendix: PostHog provider options and privacy checklist
+
+`AnalyticsBinder` passes `autocapture with captureScreens false` and `options.host` from `AppConfig.POSTHOG.HOST`. Screen views must go through `trackPostHogScreenFromNavigation` which dedupes `lastTrackedScreen` and requires `navigationRef.isReady()`.
+
+Privacy checklist comments in `analyticsPrivacy.ts`: do not send phone, email, full name, license plate, or free-text PII; prefer Cognito `sub` and bike UUID; iOS `NSPrivacyTracking` false in PrivacyInfo.xcprivacy; enabling IDFA later needs ATT plus Info.plist usage string; Android Play Data safety must disclose analytics.
+
+`index.ts` re-exports analytics, setAnalyticsConsentInMemory, AnalyticsEvents, AnalyticsBinder, AnalyticsConsentEffect, trackPostHogScreenFromNavigation, consent getters/setters, privacy version. It does **not** re-export `setupAirbridge`.
+
+`authService.logout` calls `analytics.reset()` which is intentionally empty and does not clear AsyncStorage consent.
+
+
+Airbridge deferred deeplink handling is intentionally incomplete: production builds register the callback but discard the URL. Attribution campaigns that expect in-app routing must be implemented separately. Until then, treat Airbridge as a native SDK handshake plus DEV logging only.

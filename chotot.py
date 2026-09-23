@@ -10,7 +10,7 @@ import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -50,6 +50,13 @@ def _vn_midnight(days_ago: int = 0) -> int:
     return int(d.timestamp())
 
 
+def _vn_day_bounds(target: date) -> tuple[int, int]:
+    tz_vn = timezone(timedelta(hours=7))
+    since = datetime(target.year, target.month, target.day, tzinfo=tz_vn)
+    until = since + timedelta(days=1)
+    return int(since.timestamp()), int(until.timestamp())
+
+
 def _fetch_listing_page(session: requests.Session, page: int) -> list:
     params = {
         "cg": CATEGORY, "limit": LIMIT,
@@ -74,15 +81,21 @@ def _fetch_detail_one(args) -> tuple:
         return list_id, None
 
 
-def scrape_yesterday() -> list:
+def scrape_day(target_date: date | str | None = None) -> list:
     """
-    Cào toàn bộ listings đăng HÔM QUA (00:00–23:59 VN).
+    Cào toàn bộ listings đăng trong 1 ngày VN (00:00–23:59).
+    target_date: YYYY-MM-DD string hoặc date; mặc định = hôm qua.
     Trả về list raw JSON objects — không parse, không bỏ field.
     """
-    since_ts = _vn_midnight(days_ago=1)
-    until_ts = _vn_midnight(days_ago=0)
+    if target_date is None:
+        tz_vn = timezone(timedelta(hours=7))
+        target_date = (datetime.now(tz_vn) - timedelta(days=1)).date()
+    elif isinstance(target_date, str):
+        target_date = date.fromisoformat(target_date)
 
-    log.info(f"Scraping: {datetime.fromtimestamp(since_ts).date()}")
+    since_ts, until_ts = _vn_day_bounds(target_date)
+
+    log.info(f"Scraping: {target_date}")
     log.info(f"  since_ts={since_ts}  until_ts={until_ts}")
 
     session = _make_session()
@@ -153,6 +166,13 @@ def scrape_yesterday() -> list:
 
     log.info(f"Detail OK: {len(raw_records)}/{len(yesterday_ids)}")
     return raw_records
+
+
+def scrape_yesterday() -> list:
+    """Cào listings đăng HÔM QUA (00:00–23:59 VN)."""
+    tz_vn = timezone(timedelta(hours=7))
+    yesterday = (datetime.now(tz_vn) - timedelta(days=1)).date()
+    return scrape_day(yesterday)
 
 
 def upsert_to_dynamodb(raw_records: list) -> int:

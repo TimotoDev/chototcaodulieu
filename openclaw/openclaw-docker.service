@@ -1,0 +1,15 @@
+[Unit]
+Description=OpenClaw Docker Container
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker stop openclaw
+ExecStartPre=-/usr/bin/docker rm openclaw
+ExecStart=/usr/bin/docker run --name openclaw --net=host -v /etc/openclaw:/app/config ghcr.io/openclaw/openclaw:latest
+ExecStop=/usr/bin/docker stop openclaw
+
+[Install]
+WantedBy=multi-user.target

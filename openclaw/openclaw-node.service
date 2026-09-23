@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenClaw Service
+After=network.target antigravity-proxy.service
+Wants=antigravity-proxy.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/openclaw
+ExecStart=/usr/bin/node openclaw.mjs start --allow-unconfigured
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+Environment=OPENCLAW_CONFIG_PATH=/etc/openclaw/config.json
+
+[Install]
+WantedBy=multi-user.target

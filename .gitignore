@@ -1,0 +1,35 @@
+# OS & Editor
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Large local export data & reports (1.6GB+)
+reports/
+*.tmp
+*.tmp.*
+response.json
+tasks_queue.json
+
+# Scratch & publish artifacts
+.mintlify-publish/
+graphify-out/
+
+# Terraform state & cache
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/terraform.tfvars
+**/*.zip

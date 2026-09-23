@@ -145,27 +145,33 @@ def get_listings(params):
         })
 
 def get_stats():
+    # Cache / fast count using table item count or limit scan to prevent timeout
+    total_count = table.item_count
+    
+    # Fast scan limit for dashboard aggregations to prevent Lambda 30s timeout on 140k+ items
     brands = {}; types = {}; regions = {}; daily = {}
-    kwargs = {}
-    while True:
-        result = table.scan(ProjectionExpression="motorbikebrand,motorbiketype,region_name,date_added,price", **kwargs)
-        for item in result.get("Items",[]):
-            b = BRAND_MAP.get(int(item.get("motorbikebrand",0) or 0),"Khác")
-            t = TYPE_MAP.get(int(item.get("motorbiketype",0) or 0),"Khác")
-            r = item.get("region_name","Khác") or "Khác"
-            d = item.get("date_added","")
-            brands[b] = brands.get(b,0)+1
-            types[t]  = types.get(t,0)+1
-            regions[r] = regions.get(r,0)+1
-            if d: daily[d] = daily.get(d,0)+1
-        if "LastEvaluatedKey" not in result: break
-        kwargs["ExclusiveStartKey"] = result["LastEvaluatedKey"]
+    kwargs = {
+        "ProjectionExpression": "motorbikebrand,motorbiketype,region_name,date_added",
+        "Limit": 5000
+    }
+    
+    result = table.scan(**kwargs)
+    for item in result.get("Items", []):
+        b = BRAND_MAP.get(int(item.get("motorbikebrand",0) or 0), "Khác")
+        t = TYPE_MAP.get(int(item.get("motorbiketype",0) or 0), "Khác")
+        r = str(item.get("region_name","Khác") or "Khác")
+        d = str(item.get("date_added",""))
+        brands[b] = brands.get(b,0)+1
+        types[t]  = types.get(t,0)+1
+        regions[r] = regions.get(r,0)+1
+        if d: daily[d] = daily.get(d,0)+1
+        
     return response(200, {
-        "total": sum(brands.values()),
-        "brands":  sorted([{"name":k,"count":v} for k,v in brands.items()],key=lambda x:-x["count"]),
-        "types":   sorted([{"name":k,"count":v} for k,v in types.items()],key=lambda x:-x["count"]),
-        "regions": sorted([{"name":k,"count":v} for k,v in regions.items()],key=lambda x:-x["count"])[:15],
-        "daily":   sorted([{"date":k,"count":v} for k,v in daily.items()],key=lambda x:x["date"])
+        "total": total_count,
+        "brands":  sorted([{"name":k,"count":v} for k,v in brands.items()], key=lambda x:-x["count"]),
+        "types":   sorted([{"name":k,"count":v} for k,v in types.items()], key=lambda x:-x["count"]),
+        "regions": sorted([{"name":k,"count":v} for k,v in regions.items()], key=lambda x:-x["count"])[:15],
+        "daily":   sorted([{"date":k,"count":v} for k,v in daily.items()], key=lambda x:x["date"])
     })
 
 def handler(event, context):

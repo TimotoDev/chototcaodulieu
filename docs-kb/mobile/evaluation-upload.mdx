@@ -1,0 +1,136 @@
+---
+title: "TMA Evaluation REST AllowAny vs Async Bikes Path, Seller Listing, S3 Upload"
+sidebarTitle: "Mobile Evaluation Upload"
+description: "Live RN uses POST /bikes/:id/evaluate/async/ 202. Legacy POST /evaluation/bike/ AllowAny sync with raw SQL media requires pictures or audio. Authenticated listing confirm sets marketplace_status listed. Upload presign AllowAny. Images max 20 video/audio max 10. Folder reconizationpaper typo."
+---
+
+# 1. Overview and Business Intent
+
+Two evaluation HTTP surfaces:
+
+1. **Live path:** `POST /api/v1/bikes/:id/evaluate/async/` → 202 → poll `GET /bikes/:id/evaluate/result/`. BikeDataAnalysis only.
+2. **Legacy sync:** `POST /api/v1/evaluation/bike/` AllowAny, raw SQL media, blocks HTTP until full_evaluation returns.
+
+After OPS dual price: authenticated price-selection, listing confirm/cancel/switch-to-instant, `GET /evaluation/result/` (different from bikes AI result).
+
+Uploads: AllowAny presigned PUT. Prefix S3_MEDIA_PREFIX production or staging only.
+
+**Target files:** evaluation/views.py, realtime_views.py, listing_views.py, upload/views.py.
+
+---
+
+# 2. End-to-End Flow and Sequence Diagram
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Rider as RN live
+  participant S3 as POST /upload/images
+  participant Bikes as POST /bikes/id/evaluate/async/
+  participant Legacy as POST /evaluation/bike/
+  participant List as POST listing/confirm/
+
+  Rider->>S3: file_count bike_id AllowAny
+  S3-->>Rider: presigned_urls 3600s
+  Rider->>Bikes: 202 pending
+  Note over Legacy: not called by BikeDataAnalysis
+  Rider->>List: after price-selection option listing
+  List->>List: get_or_create SellerListing
+  List->>List: Bike marketplace_status listed always
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> media: presign
+  media --> pending: bikes async
+  pending --> orr: operator review
+  orr --> selected: price-selection
+  selected --> waiting_buyer: listing confirm
+  selected --> instant: switch-to-instant
+```
+
+Media gates differ:
+
+- Async bikes: `media.count() == 0` fails — **video-only OK**
+- Sync evaluation/bike: needs picture_urls **or** audio_urls — **video-only fails** error_code 3
+
+Sync hint text: `Use /api/v1/bikes/:bike_id/media/...` (does not say POST). Async no_media body uses POST hint.
+
+---
+
+# 3. Detailed API Contracts
+
+### AllowAny sync evaluation
+
+| Method | Path | Auth |
+| --- | --- | --- |
+| POST | `/evaluation/bike/` | AllowAny |
+| POST | `/evaluation/exterior/` `/engine/` `/pricing/` `/full/` | AllowAny |
+| GET | `/evaluation/` health | AllowAny |
+
+error_code 1 missing bike_id, 2 not found 404, 3 no media 400, -1 service 500.
+
+### Authenticated post-ORR
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/evaluation/result/` | IsAuthenticated ownership; after WS |
+| GET | `/evaluation/operator-price/` | same |
+| GET POST | `/evaluation/price-selection/:bike_id/` | option listing or instant_purchase; responses use `success` |
+| POST | `/evaluation/listing/:bike_id/confirm/` | needs selection option listing; response uses `ok` |
+| POST | switch-to-instant-purchase / cancel | |
+| GET | listing status | |
+
+confirm: LISTING_SELECTION_REQUIRED / INVALID_SELECTED_OPTION. get_or_create on operator_review_request. **Always** updates Bike marketplace_status listed even when listing row already existed. 201 if created else 200.
+
+### Upload AllowAny
+
+| Method | Path | Limits |
+| --- | --- | --- |
+| POST | `/upload/images` | file_count 1-20 |
+| POST | `/upload/videos` `/audios` | 1-10 |
+| POST | `/upload/recognition-paper` | folder reconizationpaper |
+| POST | `/upload/presigned-url` and batch | |
+
+Key: prefix / bike_uuid / bike_uuid _image_ index .jpg. If Bike DoesNotExist, index starts at 1 (presign does not create bike). Expires 3600s.
+
+| HTTP Code | Error | Trigger |
+| --- | --- | --- |
+| 400 | serializer | file_count out of range |
+| 400 | error_code 3 | sync evaluate no pictures/audio |
+| 404 | PRICE_SELECTION_NOT_FOUND | GET selection empty |
+| 400 | LISTING_SELECTION_REQUIRED | confirm without selection |
+| 201 | listing created | first confirm |
+
+---
+
+# 4. Database Schema and Locks
+
+```sql
+CREATE TABLE bikes_bikemedia (
+    id BIGSERIAL PRIMARY KEY,
+    bike_id UUID NOT NULL REFERENCES bikes_bike(bike_id),
+    media_type VARCHAR(16) NOT NULL,
+    media_url TEXT NOT NULL,
+    position VARCHAR(32),
+    created_at TIMESTAMPTZ NOT NULL
+);
+```
+
+No FOR UPDATE on listing confirm Bike update. S3 object becomes a media row only after client POSTs bikes media endpoints with public_url.
+
+---
+
+# 5. Frontend and UI Logic
+
+Live evaluate = async bikes only. Calling `/evaluation/bike/` blocks the HTTP worker for the full AI run. Upload then register media — skipping register causes evaluate error_code 3. Recognition paper path typo is load-bearing for CDN/IAM.
+
+---
+
+# 6. Edge Cases and Resilience
+
+1. AllowAny evaluate-by-id burns Gemini/gRPC quota for any UUID.
+2. AllowAny upload writes under any UUID prefix.
+3. Listing confirm re-lists even if previously cancelled marketplace status.
+4. Name collision: bikes AI result vs evaluation OPS result — different URLs.
+5. Cross-link realtime-orr page for WS dual price; bikes pickup page for async evaluate.

@@ -1,0 +1,156 @@
+---
+title: "TMA Mobile Auth: SNS OTP, DEV_OTP_PASSWORD, CONFIRMATION_CODE"
+sidebarTitle: "Mobile Auth SNS OTP"
+description: "Live mobileSignup sends no password; backend PendingUser uses TempPassword123!. mobile_login sends SNS SMS ap-southeast-1. Verify requires DEV_OTP_PASSWORD and admin_set_user_password before Cognito tokens. CONFIRMATION_CODE defaults to 654321. already_registered returns session without SMS. No logout route."
+---
+
+# 1. Overview and Business Intent
+
+Rider auth hits `api.timoto.ai/api/v1/auth/`. Live RN paths: `mobileLogin`, `mobileVerifyLoginOtp`, `mobileSignup`, `mobileSendOtp`, `mobileVerifyOtp`, `mobileRefresh`.
+
+This is **not** dealer portal login. Dealer OTP is documented on the dealer Cognito page. On TMA mobile:
+
+1. OTP SMS is real via `sms_otp_service.py` (SNS region `ap-southeast-1`).
+2. Cache TTL 300s, max 5 wrong attempts, then OTP deleted.
+3. `CONFIRMATION_CODE` from settings **defaults to `654321`** (`backend/config/settings.py`). Empty string must be set explicitly to disable the backdoor. It is env-gated, not DEBUG-gated.
+4. After OTP OK on login, backend always `admin_set_user_password` to `DEV_OTP_PASSWORD` (default `DevOTP123!@#`) then `USER_PASSWORD_AUTH` / `ADMIN_NO_SRP_AUTH`. If `DEV_OTP_PASSWORD` is empty → **503**.
+
+**Actors:** `apps/src/services/auth.service.ts`, `Authen.tsx`, `OTPScreen.tsx`, Cognito, SNS, Django cache.
+
+**Target files:** `auth.service.ts`, `users/views.py`, `sms_otp_service.py`, `users/models.py`, `users/urls.py`, `config/settings.py`.
+
+---
+
+# 2. End-to-End Flow and Sequence Diagram
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Rider as RN Authen
+  participant API as /api/v1/auth
+  participant SNS as SNS ap-southeast-1
+  participant Cache as sms_otp cache
+  participant Cog as Cognito
+
+  Rider->>API: POST mobile/signup phone only
+  alt already_registered
+    API-->>Rider: 200 session already_registered true NO SMS
+  else new
+    API->>API: PendingUser password TempPassword123!
+    API-->>Rider: 200 pending_id
+    Rider->>API: POST mobile/send-otp pending_id
+    API->>Cache: 6-digit TTL 300s
+    API->>SNS: Publish SMS
+  end
+  Rider->>API: POST mobile/login phone
+  API->>Cog: list_users
+  API->>SNS: send_otp even if SNS fails still 200
+  Rider->>API: POST mobile/verify-login-otp otp_code
+  API->>Cache: match or CONFIRMATION_CODE
+  API->>Cog: admin_set_user_password DEV_OTP_PASSWORD
+  API->>Cog: initiate_auth then maybe ADMIN_NO_SRP
+  API-->>Rider: access_token refresh_token id_token user_id username
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> unknown
+  unknown --> pending: mobileSignup creates PendingUser
+  unknown --> already: already_registered session no SMS
+  pending --> waiting_sms: mobileSendOtp
+  waiting_sms --> tokens: mobileVerifyOtp
+  unknown --> session: mobileLogin Cognito hit
+  session --> tokens: mobileVerifyLoginOtp plus DEV_OTP_PASSWORD
+```
+
+Signup does **not** send SMS by itself. App must call `mobile/send-otp/` after `pending_id`. `already_registered` skips send; OTPScreen may skip resend when session exists.
+
+---
+
+# 3. Detailed API Contracts
+
+Rate limits with `block=True`: mobile_login 10/m, mobile_verify_login_otp 10/m, mobile_send_otp 5/m, mobile_verify_otp 10/m, mobile_refresh 30/m. Legacy `login_otp` is 5/m **without** `block=True`.
+
+SNS: SenderID default `TiMotoAI`, but `SNS_SMS_SKIP_SENDER_ID_FOR_VN` default **True** so `+84` numbers do **not** attach SenderID.
+
+### Live app paths
+
+| Method | Path | Body | Notes |
+| --- | --- | --- | --- |
+| POST | `/auth/mobile/signup/` | phone_number, optional email/name | Same view as `/auth/signup/`. No password from live app → server `TempPassword123!` |
+| POST | `/auth/mobile/send-otp/` | pending_id or phone_number | SNS; missing pending still 200 with note |
+| POST | `/auth/mobile/verify-otp/` | pending_id or phone plus otp_code | Cognito sign_up with PendingUser.password, Django user, tokens |
+| POST | `/auth/mobile/login/` | phone_number | Cognito must exist; SNS; 200 even if SNS fails |
+| POST | `/auth/mobile/verify-login-otp/` | phone_number, otp_code | Requires DEV_OTP_PASSWORD; snake_case tokens plus user_id |
+| POST | `/auth/mobile/refresh/` | refresh_token, username | skipAuth on client |
+
+Login verify response keys: `access_token`, `refresh_token`, `id_token`, `username`, `user_id`, `phone_number`, `message`. No `expires_in` / `token_type` on this path (FE types may still claim them).
+
+### Legacy
+
+`POST /auth/login-otp/` and `POST /auth/confirm-signup/` compare only `CONFIRMATION_CODE` (default 654321). **No SMS cache.** Legacy `authService.signup` may send `Temp` plus Date.now(); that is **not** the live Authen path.
+
+`POST /auth/logout/` is in FE endpoints. **No route in users/urls.py.** Client clears tokens anyway.
+
+`forgotPassword` FE posts `email`; backend `forgot_password` requires **`phone_number`** — FE/BE mismatch.
+
+Account delete soft-sets `deleted_at` **and** Cognito `admin_delete_user`.
+
+| HTTP Code | Error | Trigger |
+| --- | --- | --- |
+| 404 | Số điện thoại chưa được đăng ký... | mobile_login unknown phone |
+| 400 | Mã OTP không hợp lệ hoặc đã hết hạn. | verify false |
+| 400 | Phiên đăng ký đã hết hạn. | PendingUser expired |
+| 503 | OTP login service không được cấu hình... | empty DEV_OTP_PASSWORD |
+| 429 | ratelimit | mobile endpoints with block=True |
+
+---
+
+# 4. Database Schema and Locks
+
+No `select_for_update` on auth. OTP in Django cache (`sms_otp:` / `sms_otp_attempts:`). Redis only if `REDIS_URL` is a non-local redis URL; else LocMemCache (multi-worker OTP miss).
+
+```sql
+CREATE TABLE users_pendinguser (
+    pending_id UUID PRIMARY KEY,
+    phone_number VARCHAR(20) NOT NULL UNIQUE,
+    email VARCHAR(254),
+    name VARCHAR(200),
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE users_customuser (
+    user_id UUID PRIMARY KEY,
+    event_timestamp BIGINT NOT NULL,
+    username VARCHAR(150),
+    email VARCHAR(254) UNIQUE,
+    phone_number VARCHAR(20),
+    full_name VARCHAR(200),
+    deleted_at TIMESTAMPTZ,
+    zalo_id VARCHAR(64),
+    apple_id VARCHAR(255),
+    status VARCHAR(32),
+    UNIQUE (user_id, event_timestamp)
+);
+```
+
+`ZaloAuthState.state` is unique, **not** the Django PK (auto `id`).
+
+---
+
+# 5. Frontend and UI Logic
+
+`Authen.tsx` calls `mobileSignup` without password. OTP UI timer is **120s**; cache TTL is **300s**. Tokens in `tokenStorage` (IdToken as Bearer). FCM register is fire-and-forget after verify.
+
+---
+
+# 6. Edge Cases and Resilience
+
+1. SNS failure still returns 200 on login/send-otp — screen appears with no SMS unless CONFIRMATION_CODE works.
+2. `already_registered` returns session **without** calling `send_otp`.
+3. Backdoor matches CONFIRMATION_CODE without consuming the cached OTP.
+4. LocMemCache per worker breaks OTP across ECS tasks without Redis.
+5. logout HTTP fails silently.
+6. Soft-deleted users can be reactivated on JWT auth elsewhere — see authentication middleware.

@@ -1,0 +1,16 @@
+[Unit]
+Description=Antigravity Claude Proxy
+After=network.target
+
+[Service]
+Type=forking
+User=ubuntu
+Environment="HOST=127.0.0.1"
+Environment="PORT=8080"
+ExecStart=/usr/bin/antigravity-claude-proxy start
+ExecStop=/usr/bin/antigravity-claude-proxy stop
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

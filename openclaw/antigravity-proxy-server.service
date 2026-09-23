@@ -1,0 +1,15 @@
+[Unit]
+Description=Antigravity Claude Proxy Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Environment="HOST=127.0.0.1"
+Environment="PORT=8080"
+ExecStart=/usr/bin/antigravity-claude-proxy server
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

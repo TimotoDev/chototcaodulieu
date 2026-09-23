@@ -1,0 +1,164 @@
+---
+title: "TiMoto AI Platform: 5-Phút Tổng Quan Kiến Trúc & Luồng Dữ Liệu"
+sidebarTitle: "Tổng Quan Hệ Thống (5 Phút)"
+description: "Tài liệu tóm tắt 3 phần cô đọng về toàn bộ hệ sinh thái TiMoto AI: Mobile App, Internal Ops, Dealer Portal, AI Engine và Data Pipeline. Đọc trong 5 phút kèm sơ đồ trực quan."
+icon: "diagram-project"
+---
+
+<Info>
+**Mục tiêu tài liệu:** Giúp toàn bộ thành viên Tech, Product và Ops nắm bắt bức tranh toàn cảnh (End-to-End Architecture) của hệ thống **TiMoto AI** chỉ trong **5 phút đọc**.
+</Info>
+
+---
+
+# 1. Bức Tranh Tổng Thể Hệ Sinh Thái (System Architecture)
+
+Hệ sinh thái TiMoto AI bao gồm **5 khối thành phần chính** phối hợp chặt chẽ qua REST API, WebSocket và Event-driven Sync:
+
+```mermaid
+flowchart TB
+  subgraph CustomerFacing["1. Kênh Khách Hàng (Customer)"]
+    Mobile["📱 TiMoto Mobile App<br/>(React Native / iOS & Android)"]
+    Web["🌐 TiMoto AI Web<br/>(Landing Page & Waitlist Lambda)"]
+  end
+
+  subgraph OpsField["2. Vận Hành & Thẩm Định (Ops & Inspection)"]
+    InternalApp["🛠️ TiMoto Internal App<br/>(Thẩm định viên & Ops Admin)"]
+    InstantSell["⚡ Instant Sell Engine<br/>(Định giá Dual-Price FMP/TIPP)"]
+    NotaryBank["📜 Notary & Bank Verification<br/>(Hợp đồng & Payout)"]
+  end
+
+  subgraph DealerB2B["3. Kênh Đại Lý B2B (Dealer Portal)"]
+    DealerV2["🏢 Dealer Portal v2<br/>(Next.js + ECS Fargate)"]
+    VietQREscrow["💳 VietQR & Escrow Engine<br/>(Đặt cọc & Đấu giá xe)"]
+  end
+
+  subgraph CoreBackends["4. Lõi Dữ Liệu & AI"]
+    TMA_BE["⚙️ TMA Backend (Django / Aurora DB)"]
+    IA_BE["⚙️ Internal Backend (Django / PostgreSQL)"]
+    Dealer_BE["⚙️ Dealer Backend (Django / NLB)"]
+    AI_Eval["🧠 AI Evaluation Engine<br/>(OCR Cavet, SCD Vision Model)"]
+  end
+
+  subgraph DataPipeline["5. Data Scraper & Market Intelligence"]
+    Scraper["🕷️ Chợ Tốt Scraper Pipeline<br/>(Proxy Rotation + S3 Sync)"]
+  end
+
+  Mobile -->|Đăng bán, OCR, Đặt lịch| TMA_BE
+  Mobile -->|Media Upload & AI Check| AI_Eval
+  TMA_BE <-->|Sync Pickup & Hồ sơ xe| IA_BE
+  InternalApp -->|Kiểm định 360, Chốt giá| IA_BE
+  IA_BE -->|Ký công chứng & Giải ngân| NotaryBank
+  IA_BE -->|Đẩy xe đã kiểm định| Dealer_BE
+  DealerV2 -->|Đấu giá & Mua xe| Dealer_BE
+  Dealer_BE -->|Thanh toán VietQR| VietQREscrow
+  Scraper -->|Giá thị trường tham chiếu| InstantSell
+```
+
+---
+
+# 2. Vòng Đời Xe 4 Giai Đoạn (End-to-End Lifecycle)
+
+Toàn bộ hành trình từ lúc chủ xe đăng bán đến khi đại lý nhận xe và người bán nhận tiền:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Seller as 👤 Khách Bán (Rider)
+  participant TMA as 📱 Mobile App (TMA)
+  participant AI as 🧠 AI Engine
+  participant Ops as 🛠️ Thẩm Định Viên (IA)
+  participant Dealer as 🏢 Đại Lý (Dealer Portal)
+  participant Bank as 🏦 VietQR / Payout
+
+  Note over Seller, TMA: GIAI ĐOẠN 1: ĐĂNG BÁN & ĐỊNH GIÁ NHANH
+  Seller->>TMA: Chụp Cavet xe (Tự động OCR) + Quay chụp xe
+  TMA->>AI: Gửi hình ảnh/video thẩm định
+  AI-->>TMA: Trả về Báo cáo AI sơ bộ & Khung giá Dual-Price
+  Seller->>TMA: Chọn hình thức (Bán Nhanh TIPP hoặc Ký Gửi FMP)
+  Seller->>TMA: Đặt lịch hẹn lấy xe (Pickup Schedule)
+
+  Note over TMA, Ops: GIAI ĐOẠN 2: THẨM ĐỊNH TẬN NƠI & HỢP ĐỒNG
+  Ops->>Seller: Đến tận nơi kiểm tra 360 độ xe (Internal App)
+  Ops->>AI: Tạo báo cáo thẩm định chuẩn SCD
+  Ops->>Seller: Chốt giá cuối cùng & Ký hợp đồng công chứng điện tử (e-Notary)
+
+  Note over Ops, Dealer: GIAI ĐOẠN 3: BÀN GIAO SÀN ĐẠI LÝ B2B
+  Ops->>Dealer: Niêm yết xe đã qua kiểm định lên Dealer Portal v2
+  Dealer->>Bank: Đại lý quét mã VietQR đặt cọc (Escrow Deposit)
+  Dealer->>Dealer: Tham gia phiên đấu giá hoặc Mua đứt (Buy Now)
+
+  Note over Dealer, Bank: GIAI ĐOẠN 4: GIAO XE & GIẢI NGÂN (PAYOUT)
+  Dealer->>Ops: Nhận bàn giao xe & cavet gốc
+  Bank-->>Seller: Payout Engine giải ngân tiền trực tiếp về STK người bán
+```
+
+<Columns cols={2}>
+  <Card title="Giai Đoạn 1 & 2: Thu Mua (Supply)" icon="motorcycle">
+    Khách hàng cá nhân bán xe qua App Mobile. Công nghệ AI OCR Cavet và SCD Vision hỗ trợ định giá tức thì (Instant Sell) và điều phối kỹ thuật viên đến tận nơi.
+  </Card>
+  <Card title="Giai Đoạn 3 & 4: Phân Phối (Demand)" icon="building-columns">
+    Xe đã kiểm định được đẩy lên sàn B2B cho hàng trăm salon/đại lý đấu giá. Hệ thống VietQR Escrow đảm bảo an toàn thanh toán 100%.
+  </Card>
+</Columns>
+
+---
+
+# 3. Bản Đồ Trách Nhiệm & Repositories (Tech Stack Matrix)
+
+<Tabs>
+  <Tab title="1. Mobile & Web Frontend">
+    - **`timoto-mobile`**: 
+      - *Stack:* React Native, TypeScript, Redux Toolkit, React Navigation.
+      - *Chức năng:* Luồng đăng bán 6 bước, OCR Cavet tự động, Upload đa phương tiện (Ảnh/Audio/Video), chọn giá Dual-Price (TIPP/FMP), đặt lịch Pickup, tích hợp Zalo SDK & Apple Sign-In.
+    - **`TiMoto-AI-Web`**:
+      - *Stack:* Next.js 14, Tailwind CSS, Vercel, AWS Lambda (Waitlist).
+      - *Chức năng:* Trang giới thiệu sản phẩm và tiếp nhận đăng ký sớm.
+  </Tab>
+
+  <Tab title="2. Internal Operations (IA)">
+    - **`timoto-internal-app`**:
+      - *Stack:* Django 5 REST Framework, PostgreSQL Aurora, React Native (Ops App).
+      - *Chức năng:* 
+        - Quản lý lịch Pickup của kỹ thuật viên.
+        - Quy trình kiểm định xe 360 độ (SCD Report).
+        - **Instant Sell Engine:** Quyết định giá thu mua và ký hợp đồng công chứng điện tử.
+        - **Deposit & Payout Engine:** Xác thực tài khoản ngân hàng và kích hoạt lệnh giải ngân.
+  </Tab>
+
+  <Tab title="3. Dealer Portal B2B">
+    - **`timoto_dealer_portal_v2` & `timoto-dealer-portal`**:
+      - *Stack:* Next.js (V2 Frontend) + Django REST (Backend on AWS ECS Fargate + NLB).
+      - *Chức năng:*
+        - Sàn đấu giá và catalog mua buôn xe máy cho đại lý.
+        - Tích hợp cổng thanh toán tự động VietQR (Dynamic QR & Webhook Reconcile).
+        - Quản lý tài khoản đại lý (Cognito OTP & Zalo OAuth).
+  </Tab>
+
+  <Tab title="4. Scraper & AI Core">
+    - **`chototcaodulieu`**:
+      - *Stack:* Python, BeautifulSoup, AWS S3, Proxy Pool.
+      - *Chức năng:* Thu thập và chuẩn hóa dữ liệu tin đăng xe máy toàn thị trường (Chợ Tốt), khử trùng lặp (Deduplication) để xây dựng biểu đồ giá thị trường chuẩn xác.
+  </Tab>
+</Tabs>
+
+---
+
+# 4. Các Khái Niệm Cốt Lõi Cần Nhớ (Cheat-Sheet)
+
+<AccordionGroup>
+  <Accordion title="Dual-Price (FMP vs TIPP) là gì?">
+    - **FMP (Fair Market Price):** Giá ký gửi bán lẻ trên sàn P2P (giá cao hơn, chờ tìm người mua).
+    - **TIPP (TiMoto Instant Purchase Price):** Giá TiMoto thu mua đứt ngay lập tức (nhận tiền trong 24h).
+  </Accordion>
+  <Accordion title="Báo cáo kiểm định SCD (Standard Condition Document)">
+    Hệ thống phân tích 3 lớp: **Ngoại thất (Exterior) $\rightarrow$ Động cơ & Khung gầm (Engine/Frame) $\rightarrow$ Định giá & Hồ sơ pháp lý**.
+  </Accordion>
+  <Accordion title="Cơ chế bảo chứng VietQR Escrow">
+    Đại lý đặt cọc qua VietQR tự động khớp lệnh trong 3 giây. Tiền cọc được giữ an toàn tại tài khoản bảo chứng cho đến khi giao nhận xe thành công.
+  </Accordion>
+</AccordionGroup>
+
+<Check>
+**Đã đồng bộ:** Toàn bộ chi tiết kỹ thuật chuyên sâu của từng module có thể tra cứu chi tiết trong các thư mục `docs-kb/` tương ứng.
+</Check>

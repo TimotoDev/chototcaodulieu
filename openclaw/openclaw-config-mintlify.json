@@ -1,0 +1,49 @@
+{
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "antigravity-proxy": {
+        "baseUrl": "http://127.0.0.1:8080",
+        "apiKey": "test",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "gemini-3-flash",
+            "name": "Gemini 3 Flash",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 1048576,
+            "maxTokens": 65536
+          },
+          {
+            "id": "claude-sonnet-4-6",
+            "name": "Claude Sonnet 4.6",
+            "reasoning": false,
+            "input": ["text", "image"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 200000,
+            "maxTokens": 16384
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "antigravity-proxy/gemini-3-flash"
+      }
+    }
+  },
+  "plugins": {
+    "mcp": {
+      "servers": {
+        "mintlify": {
+          "command": "npx",
+          "args": ["-y", "@mintlify/mcp"]
+        }
+      }
+    }
+  }
+}
