@@ -29,11 +29,13 @@ Backfill independently of the old collectors:
 export MARKET_LISTINGS_TABLE=motorbike-market-listings
 export MARKET_METADATA_TABLE=motorbike-market-metadata
 export MARKET_ARCHIVE_BUCKET=timoto-market-archive-404850807717
-python3 tools/market_backfill.py --checkpoint /private/path/backfill.json --workers 32
+python3 tools/market_backfill.py --checkpoint /private/path/backfill.json --segments 8 --workers 8
 AWS_PROFILE=harry python3 -c 'from market_snapshot import handler; print(handler({}, None))'
 ```
 
 Re-run the same backfill command to resume. Failed page writes never advance its checkpoint; replay preserves each row's first-seen order and newer observations. Check `backfill#chotot` and `reconcile#...` metadata before claiming a complete migration. Source rows remain available for recovery.
+
+The segmented importer projects only normalized input fields, uses conditional transaction inserts in batches of 25, and falls back to atomic upsert if an existing/concurrent record cancels a batch. Keep the same segment count when resuming a checkpoint; changing segmentation requires a new checkpoint and safely replays existing IDs. New-table backup activation is retried while AWS finishes enabling its backup subsystem.
 
 Deploy `dashboard/index.html` to the existing dashboard bucket only after API validation, then invalidate the existing CloudFront `/index.html` and `/` objects. This integration adds no public scraper control endpoint.
 

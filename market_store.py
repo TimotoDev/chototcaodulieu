@@ -7,6 +7,7 @@ from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError
+from botocore.config import Config
 from market_data import utc_now, validate_listing
 
 STATUSES = {'running', 'success', 'partial', 'login_required', 'blocked', 'failed'}
@@ -27,7 +28,7 @@ def batch_write_with_retry(client, table_name, requests, max_attempts=6, sleep=t
 class MarketStore:
     def __init__(self, listings=None, metadata=None):
         if listings is None or metadata is None:
-            ddb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'ap-southeast-1'))
+            ddb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'ap-southeast-1'), config=Config(max_pool_connections=64,retries={'mode':'standard','max_attempts':8}))
             listings = ddb.Table(os.environ['MARKET_LISTINGS_TABLE'])
             metadata = ddb.Table(os.environ['MARKET_METADATA_TABLE'])
         self.listings = listings
@@ -54,6 +55,26 @@ class MarketStore:
             if error.response['Error']['Code'] == 'ConditionalCheckFailedException':
                 return False
             raise
+
+    def bulk_upsert(self, rows):
+        """Fast import with conditional inserts; races/replays retain atomic upsert semantics."""
+        for row in rows:
+            validate_listing(row)
+        for start in range(0,len(rows),25):
+            batch=rows[start:start+25]
+            puts=[]
+            for row in batch:
+                item={**row,'first_seen_at':row['observed_at'],'last_seen_at':row['observed_at'],'source_order':row['observed_at']+'#'+row['listing_id']}
+                puts.append({'Put':{'TableName':self.listings.name,'Item':item,'ConditionExpression':'attribute_not_exists(listing_id)'}})
+            try:
+                self.listings.meta.client.transact_write_items(TransactItems=puts)
+            except ClientError as error:
+                if error.response['Error']['Code'] not in ('TransactionCanceledException','TransactionConflictException'):
+                    raise
+                # Existing rows or concurrent insert: preserve first-seen and reject stale replay.
+                for row in batch:
+                    self.upsert(row)
+        return len(rows)
 
     def save_run(self, run):
         from market_data import SOURCES

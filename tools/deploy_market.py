@@ -29,6 +29,16 @@ def policy(actions,resources):
     return {'Effect':'Allow','Action':actions,'Resource':resources}
 
 
+def enable_backups(ddb,name,sleep=time.sleep):
+    for attempt in range(12):
+        try:
+            return ddb.update_continuous_backups(TableName=name,PointInTimeRecoverySpecification={'PointInTimeRecoveryEnabled':True})
+        except ClientError as error:
+            if error.response['Error']['Code']!='ContinuousBackupsUnavailableException' or attempt==11:
+                raise
+            sleep(5)
+
+
 def resource_plan():
     listing_arn=f'arn:aws:dynamodb:{REGION}:{ACCOUNT}:table/{LISTINGS}'
     meta_arn=f'arn:aws:dynamodb:{REGION}:{ACCOUNT}:table/{META}'
@@ -57,7 +67,7 @@ def ensure_resources(session):
                 params['GlobalSecondaryIndexes']=[{'IndexName':'source-order-index','KeySchema':[{'AttributeName':'source','KeyType':'HASH'},{'AttributeName':'source_order','KeyType':'RANGE'}],'Projection':{'ProjectionType':'ALL'}}]
             ddb.create_table(**params)
             ddb.get_waiter('table_exists').wait(TableName=name,WaiterConfig={'Delay':2,'MaxAttempts':60})
-        ddb.update_continuous_backups(TableName=name,PointInTimeRecoverySpecification={'PointInTimeRecoveryEnabled':True})
+        enable_backups(ddb,name)
     if ddb.describe_time_to_live(TableName=META)['TimeToLiveDescription'].get('TimeToLiveStatus')=='DISABLED':
         ddb.update_time_to_live(TableName=META,TimeToLiveSpecification={'Enabled':True,'AttributeName':'expires_at'})
     try:s3.head_bucket(Bucket=ARCHIVE)
