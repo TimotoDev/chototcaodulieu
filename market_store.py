@@ -3,12 +3,14 @@ import json
 import os
 import random
 import time
+from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError
 from market_data import utc_now, validate_listing
 
 STATUSES = {'running', 'success', 'partial', 'login_required', 'blocked', 'failed'}
+ACTIVE_ATTEMPT = ContextVar('market_collection_attempt', default=None)
 
 
 def batch_write_with_retry(client, table_name, requests, max_attempts=6, sleep=time.sleep):
@@ -91,16 +93,58 @@ class MarketStore:
         return key
 
 
+class CollectionAttempt:
+    """Track the whole collector attempt, including upstream, empty and raw-write failures."""
+    def __init__(self, source, mode, store=None, enabled=True):
+        from uuid import uuid4
+        self.enabled = enabled and (store is not None or bool(os.getenv('MARKET_LISTINGS_TABLE')))
+        self.store = store
+        self.batch = 0
+        self.run = {'run_id':str(uuid4()),'source':source,'mode':mode,'started_at':utc_now(),'finished_at':None,'status':'running','observed':0,'saved':0,'rejected':0,'reason':None}
+
+    def __enter__(self):
+        if self.enabled:
+            self.store = self.store or MarketStore()
+            self.store.save_run(self.run)
+        self.token = ACTIVE_ATTEMPT.set(self if self.enabled else None)
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        try:
+            if self.enabled:
+                if exc_type:
+                    self.run['status'] = 'partial' if self.run['saved'] else 'failed'
+                    self.run['reason'] = self.run['reason'] or 'collection_failed'
+                elif not self.run['saved']:
+                    self.run.update(status='failed', reason='no_records')
+                else:
+                    self.run['status'] = 'success'
+                self.run['finished_at'] = utc_now()
+                self.store.save_run(self.run)
+        finally:
+            ACTIVE_ATTEMPT.reset(self.token)
+        return False
+
+
 def mirror_chotot(raw_records):
     """Optional mirror; failures retain IDs for reconciliation from the raw table."""
     if not os.getenv('MARKET_LISTINGS_TABLE'):
         return 0
+    attempt = ACTIVE_ATTEMPT.get()
+    if attempt is None:
+        with CollectionAttempt('chotot','mirror') as attempt:
+            attempt.run['observed'] = len(raw_records)
+            return _mirror_chotot(raw_records, attempt)
+    return _mirror_chotot(raw_records, attempt)
+
+
+def _mirror_chotot(raw_records, attempt):
     from market_data import normalize_chotot
-    from uuid import uuid4
-    store = MarketStore()
+    store = attempt.store
+    run = attempt.run
     now = utc_now()
-    run = {'run_id': str(uuid4()), 'source': 'chotot', 'mode': 'mirror', 'started_at': now, 'finished_at': None, 'status': 'running', 'observed': len(raw_records), 'saved': 0, 'rejected': 0, 'reason': None}
-    store.save_run(run)
+    attempt.batch += 1
+    batch_id = f"{run['run_id']}-{attempt.batch}"
     failed = []
     rows = []
     for raw in raw_records:
@@ -112,14 +156,14 @@ def mirror_chotot(raw_records):
         except Exception:
             failed.append(str(raw.get('ad', raw).get('list_id', 'unknown')))
     if failed:
-        store.metadata.put_item(Item={'key': f"reconcile#{run['run_id']}", 'source': 'chotot', 'external_ids': failed, 'created_at': now})
+        store.metadata.put_item(Item={'key': f"reconcile#{batch_id}", 'source': 'chotot', 'external_ids': failed, 'created_at': now})
     archive_failed = False
     try:
-        run['archive_key'] = store.archive('chotot', run['run_id'], rows)
+        run['archive_key'] = store.archive('chotot', batch_id, rows)
     except Exception:
         archive_failed = True
-    run.update(finished_at=utc_now(), status='partial' if failed or archive_failed else ('success' if rows else 'failed'), reason='normalized_write_failed' if failed else ('archive_failed' if archive_failed else None))
-    store.save_run(run)
+    run['rejected'] += len(failed)
+    run['reason'] = 'normalized_write_failed' if failed else ('archive_failed' if archive_failed else None)
     if failed or archive_failed:
         raise RuntimeError(f"Chợ Tốt raw saved; normalized mirror requires reconciliation: {len(failed)} IDs; archive_failed={archive_failed}; run={run['run_id']}")
-    return run['saved']
+    return len(rows)

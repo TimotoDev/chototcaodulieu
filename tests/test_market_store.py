@@ -4,7 +4,7 @@ from unittest.mock import patch
 import boto3
 from moto import mock_aws
 from market_data import normalize_chotot
-from market_store import MarketStore, batch_write_with_retry
+from market_store import MarketStore, batch_write_with_retry, CollectionAttempt
 
 
 @mock_aws
@@ -33,6 +33,19 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(self.meta.get_item(Key={'key':'status#facebook_marketplace'})['Item']['status'],'login_required')
         with self.assertRaises(ValueError):
             self.store.save_run({**run,'status':'success'})
+
+    def test_failed_and_empty_attempts_replace_previous_source_health(self):
+        with self.assertRaises(RuntimeError):
+            with CollectionAttempt('chotot','daily',store=self.store):
+                raise RuntimeError('upstream unavailable')
+        row=self.meta.get_item(Key={'key':'status#chotot'})['Item']
+        self.assertEqual(row['status'],'failed')
+        self.assertEqual(row['saved'],0)
+        with CollectionAttempt('chotot','daily',store=self.store):
+            pass
+        row=self.meta.get_item(Key={'key':'status#chotot'})['Item']
+        self.assertEqual(row['status'],'failed')
+        self.assertEqual(row['reason'],'no_records')
 
 
 class RetryTests(unittest.TestCase):

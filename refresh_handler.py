@@ -72,7 +72,7 @@ def _chain_self(lambda_client, event: dict) -> None:
     )
 
 
-def handler(event: dict, context) -> dict:
+def _handler(event: dict, context) -> dict:
     from chotot import _fetch_detail_one, _make_session, upsert_to_dynamodb
 
     dry_run = event.get("dry_run", False)
@@ -159,3 +159,9 @@ def handler(event: dict, context) -> dict:
 
     log.info(json.dumps({"event": "refresh_chained", "run_id": run_id, "processed": ck["processed"]}))
     return {"statusCode": 200, "body": json.dumps(ck)}
+
+
+def handler(event: dict, context) -> dict:
+    from market_store import CollectionAttempt
+    with CollectionAttempt('chotot', 'refresh', enabled=not event.get('dry_run', False)):
+        return _handler(event, context)

@@ -179,7 +179,11 @@ def upsert_to_dynamodb(raw_records: list) -> int:
     """Batch-upsert raw records vào DynamoDB. Key=list_id, lưu full raw JSON."""
     import boto3
     from boto3.dynamodb.types import TypeSerializer
-    from market_store import batch_write_with_retry, mirror_chotot
+    from market_store import batch_write_with_retry, mirror_chotot, ACTIVE_ATTEMPT
+
+    attempt = ACTIVE_ATTEMPT.get()
+    if attempt:
+        attempt.run['observed'] += len(raw_records)
 
     client     = boto3.client("dynamodb", region_name=AWS_REGION)
     serializer = TypeSerializer()

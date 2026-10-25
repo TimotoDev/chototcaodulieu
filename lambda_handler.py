@@ -80,7 +80,7 @@ def _export_daily_csv_to_s3(raw_records: list, day_str: str) -> tuple[int, str]:
     return len(rows), key
 
 
-def handler(event: dict, context) -> dict:
+def _handler(event: dict, context) -> dict:
     from chotot import scrape_day, scrape_yesterday, upsert_to_dynamodb
 
     tz_vn = timezone(timedelta(hours=7))
@@ -120,3 +120,9 @@ def handler(event: dict, context) -> dict:
     }
     log.info(json.dumps({"event": "done", **result}))
     return {"statusCode": 200, "body": json.dumps(result)}
+
+
+def handler(event: dict, context) -> dict:
+    from market_store import CollectionAttempt
+    with CollectionAttempt('chotot', 'daily', enabled=not event.get('dry_run', False)):
+        return _handler(event, context)
