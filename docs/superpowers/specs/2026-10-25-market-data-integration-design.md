@@ -1,6 +1,6 @@
 # Chợ Tốt + Facebook motorcycle data integration
 
-Status: proposed design; user selected independent collectors with shared data/dashboard. Awaiting approval of the detailed design. No implementation or AWS changes yet.
+Status: approved by user 2026-10-25; implementation underway in isolated integration branches.
 
 ## Intent and success
 
@@ -79,3 +79,8 @@ Dashboard: rename for multi-source motorcycle data, add a source selector/badges
 - Meta's public-group visibility explanation: https://about.fb.com/news/2025/11/facebook-update-group-admins-flexibility-protecting-member-privacy/ . New public posts can be visible outside Facebook; historical posts in a converted group can remain restricted.
 - Meta's distinction between authorized and unauthorized automation: https://about.fb.com/news/2021/04/how-we-combat-scraping/amp/ . Public visibility alone is not collection permission.
 - A web-fetch attempt on anonymous Hanoi Marketplace search did not return usable content because the research tool reported throttling. This is not evidence that a local Playwright run succeeds or that Facebook specifically denied that local runtime.
+
+## Implementation rulings
+
+- Latest user request explicitly requires durable Facebook storage like Chợ Tốt. Add a private encrypted S3 JSONL archive with 90-day retention alongside indefinitely retained normalized records; existing Chợ Tốt raw storage is preserved. No cookies, seller identity or free-form post text is archived.
+- A normal visible Close control on an optional sign-in promotion may be clicked by the anonymous browser. Required login or access denial still stops collection; no DOM removal or authentication bypass. Public listing detail pages are used when guest search cards omit titles.
