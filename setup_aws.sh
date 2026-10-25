@@ -94,6 +94,7 @@ ZIPFILE="$TMPDIR_BUILD/chotot_lambda.zip"
 # Copy source files
 cp "$SCRIPT_DIR/chotot.py"          "$TMPDIR_BUILD/"
 cp "$SCRIPT_DIR/lambda_handler.py"  "$TMPDIR_BUILD/"
+cp "$SCRIPT_DIR/market_data.py" "$SCRIPT_DIR/market_store.py" "$TMPDIR_BUILD/"
 
 # Install dependencies
 pip3 install -q -t "$TMPDIR_BUILD" requests boto3
