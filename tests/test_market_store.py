@@ -57,6 +57,17 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(row['first_seen_at'],newer['observed_at'])
         self.assertEqual(self.table.scan(Select='COUNT')['Count'],30)
 
+    def test_identical_observation_replay_is_read_only_but_changed_payload_updates(self):
+        row=normalize_chotot({'list_id':42,'price':8000000},'2026-10-25T20:00:00.000Z')
+        self.store.upsert(row)
+        updates=[]
+        self.table.meta.client.meta.events.register('before-call.dynamodb.UpdateItem',lambda **kw:updates.append(1))
+        self.store.bulk_upsert([row])
+        self.assertEqual(updates,[],'Identical replay should not issue redundant DynamoDB updates')
+        changed={**row,'price_vnd':9000000}
+        self.store.bulk_upsert([changed])
+        self.assertEqual(self.table.get_item(Key={'listing_id':row['listing_id']})['Item']['price_vnd'],9000000)
+
 
 class RetryTests(unittest.TestCase):
     def test_retries_unprocessed_records_and_returns_only_durable_count(self):
