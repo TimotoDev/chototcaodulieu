@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parent
 def build_zip() -> bytes:
     with tempfile.TemporaryDirectory() as td:
         tdir = Path(td)
-        for name in ("chotot.py", "refresh_handler.py"):
+        for name in ("chotot.py", "refresh_handler.py", "market_data.py", "market_store.py"):
             shutil.copy2(ROOT / name, tdir / name)
         subprocess.check_call(
             ["python3", "-m", "pip", "install", "-q", "-t", str(tdir), "requests", "boto3"]

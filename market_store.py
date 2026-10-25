@@ -67,7 +67,7 @@ class MarketStore:
             raise ValueError('Unexpected run fields')
         item = {**run, 'key': f"run#{run['source']}#{run['run_id']}", 'expires_at': int(time.time()) + 90 * 86400}
         self.metadata.put_item(Item=item)
-        status = {**item, 'key': f"status#{run['source']}"}
+        status = {**run, 'key': f"status#{run['source']}"}
         previous = self.metadata.get_item(Key={'key': status['key']}, ConsistentRead=True).get('Item', {})
         if run['status'] == 'success':
             status['last_success_at'] = run.get('finished_at') or utc_now()

@@ -177,6 +177,25 @@ def get_stats():
 def handler(event, context):
     path = event.get("rawPath", event.get("path", "/"))
     params = event.get("queryStringParameters") or {}
+    if os.environ.get('MARKET_LISTINGS_TABLE') and os.environ.get('MARKET_METADATA_TABLE'):
+        from market_read import listings_page, stats
+        from market_store import MarketStore
+        store = MarketStore()
+        try:
+            if path.endswith('/listings'):
+                return response(200, listings_page(store.listings, params))
+            elif path.endswith('/stats'):
+                return response(200, stats(store.metadata, params.get('source', 'all')))
+            elif path.endswith('/dates'):
+                snapshot = stats(store.metadata, params.get('source', 'all'))
+                return response(200, {'dates':snapshot.get('daily', []), 'snapshot_at':snapshot.get('snapshot_at'), 'complete':snapshot.get('complete',False)})
+        except (ValueError, TypeError):
+            return response(400, {'error':'Invalid query parameters or cursor'})
+        except Exception:
+            import logging
+            logging.exception('Unified market read failed')
+            return response(503, {'error':'Market data temporarily unavailable'})
+        return response(404, {'error':'not found'})
     if path.endswith("/dates"):    return get_dates()
     elif path.endswith("/listings"): return get_listings(params)
     elif path.endswith("/stats"):  return get_stats()

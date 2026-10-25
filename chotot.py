@@ -179,6 +179,7 @@ def upsert_to_dynamodb(raw_records: list) -> int:
     """Batch-upsert raw records vào DynamoDB. Key=list_id, lưu full raw JSON."""
     import boto3
     from boto3.dynamodb.types import TypeSerializer
+    from market_store import batch_write_with_retry, mirror_chotot
 
     client     = boto3.client("dynamodb", region_name=AWS_REGION)
     serializer = TypeSerializer()
@@ -220,18 +221,15 @@ def upsert_to_dynamodb(raw_records: list) -> int:
             continue
         batch.append({"PutRequest": {"Item": item}})
         if len(batch) == 25:
-            try:
-                client.batch_write_item(RequestItems={DDB_TABLE: batch})
-                written += len(batch)
-            except Exception as e:
-                log.error(f"DDB batch: {e}")
+            written += batch_write_with_retry(client, DDB_TABLE, batch)
             batch = []
     if batch:
-        try:
-            client.batch_write_item(RequestItems={DDB_TABLE: batch})
-            written += len(batch)
-        except Exception as e:
-            log.error(f"DDB batch final: {e}")
+        written += batch_write_with_retry(client, DDB_TABLE, batch)
+
+    # Raw successes remain durable if this opt-in mirror fails; reconciliation IDs
+    # are saved separately and a partial ingestion is not reported as success.
+    if written:
+        mirror_chotot(raw_records)
 
     log.info(f"DynamoDB: {written}/{len(raw_records)} → {DDB_TABLE}")
     return written
