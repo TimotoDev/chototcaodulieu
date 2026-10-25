@@ -47,6 +47,16 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(row['status'],'failed')
         self.assertEqual(row['reason'],'no_records')
 
+    def test_bulk_import_preserves_newer_records_and_initial_order(self):
+        newer=normalize_chotot({'list_id':1,'price':12000000},'2026-10-25T21:00:00.000Z')
+        self.store.upsert(newer)
+        rows=[normalize_chotot({'list_id':i,'price':8000000},'2026-10-25T20:00:00.000Z') for i in range(1,31)]
+        self.assertEqual(self.store.bulk_upsert(rows),30)
+        row=self.table.get_item(Key={'listing_id':'chotot:1'})['Item']
+        self.assertEqual(row['price_vnd'],12000000)
+        self.assertEqual(row['first_seen_at'],newer['observed_at'])
+        self.assertEqual(self.table.scan(Select='COUNT')['Count'],30)
+
 
 class RetryTests(unittest.TestCase):
     def test_retries_unprocessed_records_and_returns_only_durable_count(self):

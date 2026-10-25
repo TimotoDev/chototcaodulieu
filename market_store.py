@@ -7,6 +7,7 @@ from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError
+from botocore.config import Config
 from market_data import utc_now, validate_listing
 
 STATUSES = {'running', 'success', 'partial', 'login_required', 'blocked', 'failed'}
@@ -27,7 +28,7 @@ def batch_write_with_retry(client, table_name, requests, max_attempts=6, sleep=t
 class MarketStore:
     def __init__(self, listings=None, metadata=None):
         if listings is None or metadata is None:
-            ddb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'ap-southeast-1'))
+            ddb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'ap-southeast-1'), config=Config(max_pool_connections=64,retries={'mode':'standard','max_attempts':8}))
             listings = ddb.Table(os.environ['MARKET_LISTINGS_TABLE'])
             metadata = ddb.Table(os.environ['MARKET_METADATA_TABLE'])
         self.listings = listings
@@ -54,6 +55,41 @@ class MarketStore:
             if error.response['Error']['Code'] == 'ConditionalCheckFailedException':
                 return False
             raise
+
+    def bulk_upsert(self, rows):
+        """Fast import with conditional inserts; races/replays retain atomic upsert semantics."""
+        for row in rows:
+            validate_listing(row)
+        for start in range(0,len(rows),25):
+            batch=rows[start:start+25]
+            pending={self.listings.name:{'Keys':[{'listing_id':row['listing_id']} for row in batch],'ProjectionExpression':'listing_id,last_seen_at','ConsistentRead':True}}
+            existing={}
+            for attempt in range(6):
+                response=self.listings.meta.client.batch_get_item(RequestItems=pending)
+                existing.update({item['listing_id']:item for item in response.get('Responses',{}).get(self.listings.name,[])})
+                pending=response.get('UnprocessedKeys',{})
+                if not pending:break
+                time.sleep(min(3,.1*2**attempt))
+            if pending:raise RuntimeError('Backfill existing-record read incomplete')
+            puts=[]
+            for row in batch:
+                current=existing.get(row['listing_id'])
+                if current:
+                    if current.get('last_seen_at','')<=row['observed_at']:
+                        self.upsert(row)
+                    continue
+                item={**row,'first_seen_at':row['observed_at'],'last_seen_at':row['observed_at'],'source_order':row['observed_at']+'#'+row['listing_id']}
+                puts.append({'Put':{'TableName':self.listings.name,'Item':item,'ConditionExpression':'attribute_not_exists(listing_id)'}})
+            if not puts:continue
+            try:
+                self.listings.meta.client.transact_write_items(TransactItems=puts)
+            except ClientError as error:
+                if error.response['Error']['Code'] not in ('TransactionCanceledException','TransactionConflictException'):
+                    raise
+                # Existing rows or concurrent insert: preserve first-seen and reject stale replay.
+                for row in batch:
+                    self.upsert(row)
+        return len(rows)
 
     def save_run(self, run):
         from market_data import SOURCES
