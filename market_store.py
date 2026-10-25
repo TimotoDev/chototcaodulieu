@@ -62,10 +62,25 @@ class MarketStore:
             validate_listing(row)
         for start in range(0,len(rows),25):
             batch=rows[start:start+25]
+            pending={self.listings.name:{'Keys':[{'listing_id':row['listing_id']} for row in batch],'ProjectionExpression':'listing_id,last_seen_at','ConsistentRead':True}}
+            existing={}
+            for attempt in range(6):
+                response=self.listings.meta.client.batch_get_item(RequestItems=pending)
+                existing.update({item['listing_id']:item for item in response.get('Responses',{}).get(self.listings.name,[])})
+                pending=response.get('UnprocessedKeys',{})
+                if not pending:break
+                time.sleep(min(3,.1*2**attempt))
+            if pending:raise RuntimeError('Backfill existing-record read incomplete')
             puts=[]
             for row in batch:
+                current=existing.get(row['listing_id'])
+                if current:
+                    if current.get('last_seen_at','')<=row['observed_at']:
+                        self.upsert(row)
+                    continue
                 item={**row,'first_seen_at':row['observed_at'],'last_seen_at':row['observed_at'],'source_order':row['observed_at']+'#'+row['listing_id']}
                 puts.append({'Put':{'TableName':self.listings.name,'Item':item,'ConditionExpression':'attribute_not_exists(listing_id)'}})
+            if not puts:continue
             try:
                 self.listings.meta.client.transact_write_items(TransactItems=puts)
             except ClientError as error:
