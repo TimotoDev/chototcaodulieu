@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly TiMoto Mintlify Git source refresh
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+Persistent=true
+Unit=tom-kb-sync.service
+
+[Install]
+WantedBy=timers.target

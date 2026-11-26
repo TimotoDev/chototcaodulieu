@@ -1,0 +1,81 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "loopback",
+    "trustedProxies": ["127.0.0.1", "::1"],
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "controlUi": { "enabled": false },
+    "terminal": { "enabled": false }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "antigravity-proxy": {
+        "baseUrl": "http://127.0.0.1:8080",
+        "apiKey": "test",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "gemini-3.8-flash-tiered",
+            "name": "Gemini 3.8 Flash via Antigravity proxy",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 1048576,
+            "maxTokens": 65536
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "/home/tom/.openclaw/workspace",
+      "model": { "primary": "antigravity-proxy/gemini-3.8-flash-tiered" }
+    },
+    "entries": {
+      "main": {
+        "identity": {
+          "name": "Tom",
+          "emoji": "🏍️",
+          "theme": "Direct, practical, friendly TiMoto assistant"
+        }
+      }
+    }
+  },
+  "channels": {
+    "slack": {
+      "enabled": true,
+      "mode": "http",
+      "webhookPath": "/slack/events",
+      "signingSecret": { "source": "env", "provider": "default", "id": "SLACK_SIGNING_SECRET" },
+      "botToken": { "source": "env", "provider": "default", "id": "SLACK_BOT_TOKEN" },
+      "dmPolicy": "pairing",
+      "groupPolicy": "open",
+      "allowBots": false,
+      "joinIntro": false
+    }
+  },
+  "plugins": {
+    "entries": {
+      "slack": { "enabled": true }
+    }
+  },
+  "mcp": {
+    "servers": {
+      "timoto-docs": {
+        "command": "/usr/bin/node",
+        "args": ["/home/tom/kb-mcp/server.mjs"],
+        "toolFilter": { "include": ["search", "read_page"] }
+      }
+    }
+  },
+  "tools": {
+    "profile": "messaging",
+    "allow": ["bundle-mcp"],
+    "deny": ["exec", "process", "write", "edit", "apply_patch", "browser", "gateway"]
+  }
+}

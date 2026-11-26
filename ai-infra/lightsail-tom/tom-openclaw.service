@@ -1,0 +1,22 @@
+[Unit]
+Description=TiMoto Tom Slack knowledge assistant
+After=network-online.target tom-proxy.service
+Wants=network-online.target tom-proxy.service
+ConditionPathExists=/home/tom/.openclaw/runtime.env
+
+[Service]
+Type=simple
+User=tom
+Group=tom
+WorkingDirectory=/home/tom
+Environment=HOME=/home/tom
+Environment=OPENCLAW_CONFIG_PATH=/home/tom/.openclaw/openclaw.json
+EnvironmentFile=/home/tom/.openclaw/runtime.env
+ExecStart=/usr/bin/openclaw gateway
+Restart=on-failure
+RestartSec=8
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

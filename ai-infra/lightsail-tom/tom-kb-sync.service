@@ -1,0 +1,14 @@
+[Unit]
+Description=Refresh TiMoto Mintlify Git source mirror
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=tom
+Group=tom
+WorkingDirectory=/home/tom/kb-source
+ExecStart=/usr/bin/git -C /home/tom/kb-source pull --ff-only origin main
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/tom/kb-source

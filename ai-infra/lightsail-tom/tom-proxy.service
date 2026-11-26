@@ -1,0 +1,21 @@
+[Unit]
+Description=TiMoto Tom Antigravity proxy (loopback only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tom
+Group=tom
+WorkingDirectory=/home/tom
+Environment=HOME=/home/tom
+Environment=HOST=127.0.0.1
+Environment=PORT=8080
+ExecStart=/usr/bin/antigravity-claude-proxy start --log
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
